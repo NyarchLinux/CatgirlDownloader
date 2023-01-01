@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=catgirldownloader
+Exec=catgirldownloader
+Icon=moe.nyarchlinux.catgirldownloader
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

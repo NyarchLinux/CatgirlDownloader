@@ -1,0 +1,6 @@
+data/moe.nyarchlinux.catgirldownloader.desktop.in
+data/moe.nyarchlinux.catgirldownloader.appdata.xml.in
+data/moe.nyarchlinux.catgirldownloader.gschema.xml
+src/main.py
+src/window.py
+src/window.ui
