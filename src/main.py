@@ -48,6 +48,7 @@ class CatgirldownloaderApplication(Adw.Application):
         win = self.props.active_window
         if not win:
             win = CatgirldownloaderWindow(application=self)
+        win.set_title("Catgirl Downloader")
         self.window = win
         win.present()
 
