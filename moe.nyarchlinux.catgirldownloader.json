@@ -31,7 +31,7 @@
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "file:///home/francesco/Progetti"
+                    "url" : ""
                 }
             ]
         }
