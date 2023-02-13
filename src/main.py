@@ -55,7 +55,7 @@ class CatgirldownloaderApplication(Adw.Application):
         """Callback for the app.about action."""
         about = Adw.AboutWindow(transient_for=self.props.active_window,
                                 application_name='Catgirl Downloader',
-                                application_icon='catgirldownloader.nyarchlinux.moe',
+                                application_icon='moe.nyarchlinux.catgirldownloader',
                                 developer_name='Nyarch Linux developers team',
                                 version='0.1.0',
                                 developers=['SilverOS'],
