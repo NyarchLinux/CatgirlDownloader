@@ -1,7 +1,7 @@
 {
     "app-id" : "moe.nyarchlinux.catgirldownloader",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "44",
+    "runtime-version" : "45",
     "sdk" : "org.gnome.Sdk",
     "command" : "catgirldownloader",
     "finish-args" : [
@@ -10,6 +10,7 @@
         "--socket=fallback-x11",
         "--device=dri",
         "--socket=wayland"
+        "--filesystem=host"
     ],
     "cleanup" : [
         "/include",
