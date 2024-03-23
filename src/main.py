@@ -58,9 +58,9 @@ class CatgirldownloaderApplication(Adw.Application):
                                 application_name='Catgirl Downloader',
                                 application_icon='moe.nyarchlinux.catgirldownloader',
                                 developer_name='Nyarch Linux developers team',
-                                version='0.2.4',
+                                version='0.2.6',
                                 developers=['SilverOS'],
-                                copyright='© 2022 SilverOS')
+                                copyright='© 2024 SilverOS')
         about.present()
 
     def on_art_about_action(self, widget, _):
