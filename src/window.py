@@ -62,6 +62,10 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         # Display image
         loader = GdkPixbuf.PixbufLoader()
         loader.write_bytes(GLib.Bytes.new(content))
+        # Try retrieving image extension and save it for use in file_chooser_dialog later
+        image_format = loader.get_format()
+        if image_format and image_format.extensions:
+            self.image_extension = image_format.extensions[0]
         loader.close()
         self.image.set_from_pixbuf(loader.get_pixbuf())
         # Stop loading and display image
@@ -80,6 +84,22 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         """
         self.dialog = Gtk.FileChooserDialog(title="Save, file", parent=self,
                                             action=Gtk.FileChooserAction.SAVE)
+
+        image_id = self.info["images"][0]["id"]
+        if self.image_extension:
+            # If we know the extension, add a filter for it
+            file_extension = self.image_extension
+            image_filter = Gtk.FileFilter()
+            image_filter.set_name(f"{file_extension.upper()} files")
+            image_filter.add_pattern(f"*.{file_extension}")
+            self.dialog.add_filter(image_filter)
+            # And suggest a sensible default filename
+            # using this format ensures the image source can easily be found from its name
+            self.dialog.set_current_name(f"nekos.moe_{image_id}.{file_extension}")
+        else:
+            # Otherwise just suggest a sensible default filename (normally the extension should always be there, but just in case)
+            self.dialog.set_current_name(f"nekos.moe_{image_id}")
+
         # Buttons
         self.dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
         self.dialog.add_button('Save', Gtk.ResponseType.OK)
