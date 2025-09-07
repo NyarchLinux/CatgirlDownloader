@@ -57,7 +57,7 @@
         <attribute name="action">app.preferences</attribute>
       </item>
       <item>
-        <attribute name="label" translatable="yes">_About CatgirlDownloader</attribute>
+        <attribute name="label" translatable="yes">_About Furry Downloader</attribute>
         <attribute name="action">app.about</attribute>
       </item>
     </section>

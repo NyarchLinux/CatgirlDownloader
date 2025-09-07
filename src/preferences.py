@@ -6,6 +6,8 @@ class UserPreferences:
     def __init__(self):
         self.preferences = {
             "nsfw": False,
+            "source": "nekos",
+            "e621_tags": "",
         }
         self.directory = GLib.get_user_config_dir()
         self.file = os.path.join(self.directory, "config.json")
@@ -15,7 +17,10 @@ class UserPreferences:
         	f.close()
         try:
             f = open(self.file, 'r')
-            self.preferences = json.loads(f.read())
+            current = json.loads(f.read())
+            merged = dict(self.preferences)
+            merged.update(current)
+            self.preferences = merged
             f.close()
         except Exception as e:
             print(e)

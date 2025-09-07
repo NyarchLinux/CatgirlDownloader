@@ -48,14 +48,14 @@ class CatgirldownloaderApplication(Adw.Application):
         win = self.props.active_window
         if not win:
             win = CatgirldownloaderWindow(application=self)
-        win.set_title("Catgirl Downloader")
+        win.set_title("Furry Downloader")
         self.window = win
         win.present()
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
         about = Adw.AboutWindow(transient_for=self.props.active_window,
-                                application_name='Catgirl Downloader',
+                                application_name='Furry Downloader',
                                 application_icon='moe.furry.catgirldownloader',
                                 developer_name='Avelcius',
                                 version='0.2.6',
@@ -67,9 +67,15 @@ class CatgirldownloaderApplication(Adw.Application):
         """Callback for the app.about action."""
         if hasattr(self.window, "info"):
             info = self.window.info["images"][0]
+            # Use source-aware website if possible
+            try:
+                source = self.window.current_source if hasattr(self.window, 'current_source') else 'nekos'
+            except Exception:
+                source = 'nekos'
+            website = ("https://e621.net/posts/" + info['id']) if source == 'e621' else ("https://nekos.moe/post/" + info['id'])
             about = Adw.AboutWindow(transient_for=self.props.active_window,
                                     artists=[info['artist']],
-                                    website="https://nekos.moe/post/" + info['id'])
+                                    website=website)
             about.present()
 
     def on_preferences_action(self, widget, _):

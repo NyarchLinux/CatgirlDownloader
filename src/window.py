@@ -18,7 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, Adw, GdkPixbuf, GLib
-from .catgirl import CatgirlDownloaderAPI
+from .catgirl import CatgirlDownloaderAPI, E621DownloaderAPI
 import threading
 from .preferences import UserPreferences
 
@@ -34,6 +34,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.settings = UserPreferences()
+        self.current_source = self.settings.get_preference("source") or 'nekos'
         self.refresh_button.connect("clicked", self.async_reloadimage)
         self.save_button.connect("clicked", self.file_chooser_dialog)
         self.async_reloadimage()
@@ -47,14 +48,16 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         # Start loading
         self.spinner.set_visible(True)
         self.spinner.start()
-        # Get catgirl image
-        nsfwsetting = self.settings.get_preference("nsfw")
-        if nsfwsetting:
-            nsfw = True
+        # Get image from selected source
+        nsfwsetting = bool(self.settings.get_preference("nsfw"))
+        self.current_source = self.settings.get_preference("source") or 'nekos'
+        if self.current_source == 'e621':
+            tags = self.settings.get_preference("e621_tags") or ""
+            ct = E621DownloaderAPI()
+            url = ct.get_neko(nsfwsetting, tags)
         else:
-            nsfw = False
-        ct = CatgirlDownloaderAPI()
-        url = ct.get_neko(nsfw)
+            ct = CatgirlDownloaderAPI()
+            url = ct.get_neko(nsfwsetting)
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)
@@ -95,10 +98,12 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             self.dialog.add_filter(image_filter)
             # And suggest a sensible default filename
             # using this format ensures the image source can easily be found from its name
-            self.dialog.set_current_name(f"nekos.moe_{image_id}.{file_extension}")
+            prefix = 'e621' if self.current_source == 'e621' else 'nekos.moe'
+            self.dialog.set_current_name(f"{prefix}_{image_id}.{file_extension}")
         else:
             # Otherwise just suggest a sensible default filename (normally the extension should always be there, but just in case)
-            self.dialog.set_current_name(f"nekos.moe_{image_id}")
+            prefix = 'e621' if self.current_source == 'e621' else 'nekos.moe'
+            self.dialog.set_current_name(f"{prefix}_{image_id}")
 
         # Buttons
         self.dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
