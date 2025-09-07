@@ -6,7 +6,7 @@ class UserPreferences:
     def __init__(self):
         self.preferences = {
             "nsfw": False,
-            "source": "nekos",
+            "source": "e621",
             "e621_tags": "",
         }
         self.directory = GLib.get_user_config_dir()

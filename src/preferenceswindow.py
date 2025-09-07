@@ -16,13 +16,9 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.nsfw_switch.connect('notify::active', self.toggle_nsfw)
 
         # Initialize source selector
-        self.source_selector.append_text('nekos')
+        # Only furry source (e621)
         self.source_selector.append_text('e621')
-        current_source = self.settings.get_preference("source") or 'nekos'
-        if current_source == 'e621':
-            self.source_selector.set_active(1)
-        else:
-            self.source_selector.set_active(0)
+        self.source_selector.set_active(0)
         self.source_selector.connect('changed', self.change_source)
 
         # Initialize e621 tags entry

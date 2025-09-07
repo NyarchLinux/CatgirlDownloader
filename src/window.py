@@ -34,7 +34,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.settings = UserPreferences()
-        self.current_source = self.settings.get_preference("source") or 'nekos'
+        self.current_source = 'e621'
         self.refresh_button.connect("clicked", self.async_reloadimage)
         self.save_button.connect("clicked", self.file_chooser_dialog)
         self.async_reloadimage()
@@ -50,14 +50,10 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.spinner.start()
         # Get image from selected source
         nsfwsetting = bool(self.settings.get_preference("nsfw"))
-        self.current_source = self.settings.get_preference("source") or 'nekos'
-        if self.current_source == 'e621':
-            tags = self.settings.get_preference("e621_tags") or ""
-            ct = E621DownloaderAPI()
-            url = ct.get_neko(nsfwsetting, tags)
-        else:
-            ct = CatgirlDownloaderAPI()
-            url = ct.get_neko(nsfwsetting)
+        self.current_source = 'e621'
+        tags = self.settings.get_preference("e621_tags") or ""
+        ct = E621DownloaderAPI()
+        url = ct.get_neko(nsfwsetting, tags)
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)
