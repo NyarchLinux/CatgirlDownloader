@@ -57,7 +57,7 @@ class CatgirldownloaderApplication(Adw.Application):
         about = Adw.AboutWindow(transient_for=self.props.active_window,
                                 application_name='Catgirl Downloader',
                                 application_icon='moe.furry.catgirldownloader',
-                                developer_name='ВашНик',
+                                developer_name='Avelcius',
                                 version='0.2.6',
                                 developers=['SilverOS'],
                                 copyright='© 2024 SilverOS')
