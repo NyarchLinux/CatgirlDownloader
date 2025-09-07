@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-        input: 'moe.furry.catgirldownloader.desktop.in',
-       output: 'moe.furry.catgirldownloader.desktop',
+        input: 'moe.Avelcius.furrydownloader.desktop.in',
+       output: 'moe.Avelcius.furrydownloader.desktop',
          type: 'desktop',
        po_dir: '../po',
       install: true,
@@ -13,8 +13,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-        input: 'moe.furry.catgirldownloader.appdata.xml.in',
-       output: 'moe.furry.catgirldownloader.appdata.xml',
+        input: 'moe.Avelcius.furrydownloader.appdata.xml.in',
+       output: 'moe.Avelcius.furrydownloader.appdata.xml',
        po_dir: '../po',
       install: true,
   install_dir: join_paths(get_option('datadir'), 'appdata')
@@ -25,7 +25,7 @@ if appstream_util.found()
   test('Validate appstream file', appstream_util, args: ['validate', appstream_file])
 endif
 
-install_data('moe.furry.catgirldownloader.gschema.xml',
+install_data('moe.Avelcius.furrydownloader.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
 )
 

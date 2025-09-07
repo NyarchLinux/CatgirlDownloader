@@ -1,7 +1,7 @@
 from gi.repository import GLib, Gtk, Adw
 from .preferences import UserPreferences
 
-@Gtk.Template(resource_path='/moe/furry/catgirldownloader/../data/ui/preferences.ui')
+@Gtk.Template(resource_path='/moe/Avelcius/furrydownloader/../data/ui/preferences.ui')
 class PreferencesWindow(Adw.PreferencesWindow):
     __gtype_name__ = 'PreferencesWindow'
     nsfw_switch = Gtk.Template.Child("nsfw")

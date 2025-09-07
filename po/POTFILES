@@ -1,6 +1,6 @@
-data/moe.furry.catgirldownloader.desktop.in
-data/moe.furry.catgirldownloader.appdata.xml.in
-data/moe.furry.catgirldownloader.gschema.xml
+data/moe.Avelcius.furrydownloader.desktop.in
+data/moe.Avelcius.furrydownloader.appdata.xml.in
+data/moe.Avelcius.furrydownloader.gschema.xml
 src/main.py
 src/window.py
 src/window.ui

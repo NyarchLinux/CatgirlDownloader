@@ -1,5 +1,5 @@
 {
-    "app-id" : "moe.furry.catgirldownloader",
+    "app-id" : "moe.Avelcius.furrydownloader",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "48",
     "sdk" : "org.gnome.Sdk",
