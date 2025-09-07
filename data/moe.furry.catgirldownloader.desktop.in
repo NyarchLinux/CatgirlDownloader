@@ -2,7 +2,7 @@
 Name=Catgirl Downloader
 Comment=Useful application to download catgirl images
 Exec=catgirldownloader
-Icon=moe.nyarchlinux.catgirldownloader
+Icon=moe.furry.catgirldownloader
 Terminal=false
 Type=Application
 Categories=Utility;

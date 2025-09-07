@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/moe/nyarchlinux/catgirldownloader">
+  <gresource prefix="/moe/furry/catgirldownloader">
         <file preprocess="xml-stripblanks">../data/ui/window.ui</file>
         <file preprocess="xml-stripblanks">../data/ui/preferences.ui</file>
   </gresource>

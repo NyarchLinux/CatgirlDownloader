@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-        input: 'moe.nyarchlinux.catgirldownloader.desktop.in',
-       output: 'moe.nyarchlinux.catgirldownloader.desktop',
+        input: 'moe.furry.catgirldownloader.desktop.in',
+       output: 'moe.furry.catgirldownloader.desktop',
          type: 'desktop',
        po_dir: '../po',
       install: true,
@@ -13,8 +13,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-        input: 'moe.nyarchlinux.catgirldownloader.appdata.xml.in',
-       output: 'moe.nyarchlinux.catgirldownloader.appdata.xml',
+        input: 'moe.furry.catgirldownloader.appdata.xml.in',
+       output: 'moe.furry.catgirldownloader.appdata.xml',
        po_dir: '../po',
       install: true,
   install_dir: join_paths(get_option('datadir'), 'appdata')
@@ -25,7 +25,7 @@ if appstream_util.found()
   test('Validate appstream file', appstream_util, args: ['validate', appstream_file])
 endif
 
-install_data('moe.nyarchlinux.catgirldownloader.gschema.xml',
+install_data('moe.furry.catgirldownloader.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
 )
 

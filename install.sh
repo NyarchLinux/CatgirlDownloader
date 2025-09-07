@@ -1,5 +1,5 @@
 #!/bin/bash
-APPID="moe.nyarchlinux.catgirldownloader"
+APPID="moe.furry.catgirldownloader"
 BUNDLENAME="catgirldownloader.flatpak"
 flatpak-builder --install --user --force-clean flatpak-app "$APPID".json
 

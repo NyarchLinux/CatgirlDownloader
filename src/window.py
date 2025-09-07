@@ -22,7 +22,7 @@ from .catgirl import CatgirlDownloaderAPI
 import threading
 from .preferences import UserPreferences
 
-@Gtk.Template(resource_path='/moe/nyarchlinux/catgirldownloader/../data/ui/window.ui')
+@Gtk.Template(resource_path='/moe/furry/catgirldownloader/../data/ui/window.ui')
 class CatgirldownloaderWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'CatgirldownloaderWindow'
 
