@@ -12,17 +12,6 @@
             <property name="title" translatable="yes">Images</property>
             <child>
               <object class="AdwActionRow">
-                <property name="title" translatable="yes">Rating</property>
-                <property name="activatable_widget">rating</property>
-                <child>
-                  <object class="GtkComboBoxText" id="rating">
-                    <property name="valign">center</property>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="AdwActionRow">
                 <property name="title" translatable="yes">Source</property>
                 <property name="activatable_widget">source</property>
                 <child>
@@ -34,13 +23,24 @@
             </child>
             <child>
               <object class="AdwActionRow">
+                <property name="title" translatable="yes">Rating</property>
+                <property name="activatable_widget">rating</property>
+                <child>
+                  <object class="GtkComboBoxText" id="rating">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
                 <property name="title" translatable="yes">e621 Tags</property>
-                <property name="subtitle" translatable="yes">Space-separated, e.g. wolf rating:safe</property>
+                <property name="subtitle" translatable="yes">Space-separated, e.g. fox female</property>
                 <property name="activatable_widget">e621_tags</property>
                 <child>
                   <object class="GtkEntry" id="e621_tags">
                     <property name="valign">center</property>
-                    <property name="placeholder-text" translatable="yes">tags...</property>
+                    <property name="placeholder-text" translatable="yes">fox female</property>
                   </object>
                 </child>
               </object>
