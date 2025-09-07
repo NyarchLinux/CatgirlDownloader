@@ -5,9 +5,9 @@ import json
 class UserPreferences:
     def __init__(self):
         self.preferences = {
-            "nsfw": False,
             "source": "e621",
             "e621_tags": "",
+            "rating": "safe",
         }
         self.directory = GLib.get_user_config_dir()
         self.file = os.path.join(self.directory, "config.json")

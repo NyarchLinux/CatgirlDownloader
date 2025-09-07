@@ -4,7 +4,7 @@ from .preferences import UserPreferences
 @Gtk.Template(resource_path='/moe/Avelcius/furrydownloader/../data/ui/preferences.ui')
 class PreferencesWindow(Adw.PreferencesWindow):
     __gtype_name__ = 'PreferencesWindow'
-    nsfw_switch = Gtk.Template.Child("nsfw")
+    rating_selector = Gtk.Template.Child("rating")
     source_selector = Gtk.Template.Child("source")
     e621_tags_entry = Gtk.Template.Child("e621_tags")
 
@@ -12,8 +12,16 @@ class PreferencesWindow(Adw.PreferencesWindow):
         super().__init__(**kwargs)
         self.window = window
         self.settings = UserPreferences()
-        self.nsfw_switch.set_state(self.settings.get_preference("nsfw"))
-        self.nsfw_switch.connect('notify::active', self.toggle_nsfw)
+        # Rating selector
+        for r in ['explicit', 'questionable', 'safe']:
+            self.rating_selector.append_text(r)
+        current_rating = self.settings.get_preference("rating") or 'safe'
+        try:
+            idx = ['explicit', 'questionable', 'safe'].index(current_rating)
+        except Exception:
+            idx = 2
+        self.rating_selector.set_active(idx)
+        self.rating_selector.connect('changed', self.change_rating)
 
         # Initialize source selector
         # Only furry source (e621)
@@ -25,9 +33,10 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.e621_tags_entry.set_text(self.settings.get_preference("e621_tags") or "")
         self.e621_tags_entry.connect('changed', self.change_e621_tags)
 
-    def toggle_nsfw(self, switch, _active):
-        pref = self.nsfw_switch.get_active()
-        self.settings.set_preference("nsfw", pref)
+    def change_rating(self, combo):
+        text = combo.get_active_text()
+        if text:
+            self.settings.set_preference("rating", text)
 
     def change_source(self, combo):
         text = combo.get_active_text()

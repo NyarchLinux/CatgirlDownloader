@@ -49,11 +49,11 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.spinner.set_visible(True)
         self.spinner.start()
         # Get image from selected source
-        nsfwsetting = bool(self.settings.get_preference("nsfw"))
+        rating = self.settings.get_preference("rating") or 'safe'
         self.current_source = 'e621'
         tags = self.settings.get_preference("e621_tags") or ""
         ct = E621DownloaderAPI()
-        url = ct.get_neko(nsfwsetting, tags)
+        url = ct.get_neko(False, tags, rating)
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)

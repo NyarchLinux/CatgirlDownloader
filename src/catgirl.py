@@ -38,10 +38,12 @@ class E621DownloaderAPI:
 		})
 		self.info = None
 
-	def get_page(self, nsfw = False, tags: str = ""):
+	def get_page(self, nsfw = False, tags: str = "", rating: str = None):
 		try:
 			query_tags = tags.strip()
-			if not nsfw:
+			if rating in ("explicit", "questionable", "safe"):
+				query_tags = (query_tags + f" rating:{rating}").strip()
+			elif not nsfw:
 				query_tags = (query_tags + " rating:safe").strip()
 			params = {
 				"limit": 1,
@@ -71,8 +73,8 @@ class E621DownloaderAPI:
 		self.info = {"images": [{"id": post_id, "artist": artist_display}]}
 		return file_url
 
-	def get_neko(self, nsfw = False, tags: str = ""):
-		return self.get_page_url(self.get_page(nsfw, tags))
+	def get_neko(self, nsfw = False, tags: str = "", rating: str = None):
+		return self.get_page_url(self.get_page(nsfw, tags, rating))
 
 	def get_image(self, url):
 		r = self.session.get(url, timeout=20)

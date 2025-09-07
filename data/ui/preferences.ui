@@ -12,10 +12,10 @@
             <property name="title" translatable="yes">Images</property>
             <child>
               <object class="AdwActionRow">
-                <property name="title" translatable="yes">Allow NSFW Images</property>
-                <property name="activatable_widget">nsfw</property>
+                <property name="title" translatable="yes">Rating</property>
+                <property name="activatable_widget">rating</property>
                 <child>
-                  <object class="GtkSwitch" id="nsfw">
+                  <object class="GtkComboBoxText" id="rating">
                     <property name="valign">center</property>
                   </object>
                 </child>
