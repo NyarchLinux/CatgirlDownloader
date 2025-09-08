@@ -18,7 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, Adw, GdkPixbuf, GLib
-from .catgirl import CatgirlDownloaderAPI, E621DownloaderAPI
+from .furry import CatgirlDownloaderAPI, E621DownloaderAPI
 import threading
 from .preferences import UserPreferences
 

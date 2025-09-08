@@ -29,7 +29,7 @@ furrydownloader_sources = [
   '__init__.py',
   'main.py',
   'window.py',
-  'catgirl.py',
+  'furry.py',
   'preferences.py',
   'preferenceswindow.py',
 ]
