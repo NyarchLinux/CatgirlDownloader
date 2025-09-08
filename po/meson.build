@@ -1,1 +1,1 @@
-i18n.gettext('catgirldownloader', preset: 'glib')
+i18n.gettext('furrydownloader', preset: 'glib')

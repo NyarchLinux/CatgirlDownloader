@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="catgirldownloader">
+<schemalist gettext-domain="furrydownloader">
 	<schema id="moe.Avelcius.furrydownloader" path="/moe/Avelcius/furrydownloader/">
 	</schema>
 </schemalist>

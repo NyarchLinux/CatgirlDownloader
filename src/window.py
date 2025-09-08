@@ -23,8 +23,8 @@ import threading
 from .preferences import UserPreferences
 
 @Gtk.Template(resource_path='/moe/Avelcius/furrydownloader/../data/ui/window.ui')
-class CatgirldownloaderWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'CatgirldownloaderWindow'
+class FurrydownloaderWindow(Adw.ApplicationWindow):
+    __gtype_name__ = 'FurrydownloaderWindow'
 
     refresh_button = Gtk.Template.Child("refresh_button")
     spinner = Gtk.Template.Child("spinner")

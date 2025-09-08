@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# catgirldownloader.in
+# furrydownloader.in
 #
 # Copyright 2023 Francesco Caracciolo
 #
@@ -31,16 +31,16 @@ localedir = '@localedir@'
 
 sys.path.insert(1, pkgdatadir)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-locale.bindtextdomain('catgirldownloader', localedir)
-locale.textdomain('catgirldownloader')
-gettext.install('catgirldownloader', localedir)
+locale.bindtextdomain('furrydownloader', localedir)
+locale.textdomain('furrydownloader')
+gettext.install('furrydownloader', localedir)
 
 if __name__ == '__main__':
     import gi
 
     from gi.repository import Gio
-    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'catgirldownloader.gresource'))
+    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'furrydownloader.gresource'))
     resource._register()
 
-    from catgirldownloader import main
+    from furrydownloader import main
     sys.exit(main.main(VERSION))

@@ -1,9 +1,9 @@
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
-moduledir = join_paths(pkgdatadir, 'catgirldownloader')
+moduledir = join_paths(pkgdatadir, 'furrydownloader')
 gnome = import('gnome')
 
-gnome.compile_resources('catgirldownloader',
-  'catgirldownloader.gresource.xml',
+gnome.compile_resources('furrydownloader',
+  'furrydownloader.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -18,14 +18,14 @@ conf.set('localedir', join_paths(get_option('prefix'), get_option('localedir')))
 conf.set('pkgdatadir', pkgdatadir)
 
 configure_file(
-  input: 'catgirldownloader.in',
-  output: 'catgirldownloader',
+  input: 'furrydownloader.in',
+  output: 'furrydownloader',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir')
 )
 
-catgirldownloader_sources = [
+furrydownloader_sources = [
   '__init__.py',
   'main.py',
   'window.py',
@@ -34,4 +34,4 @@ catgirldownloader_sources = [
   'preferenceswindow.py',
 ]
 
-install_data(catgirldownloader_sources, install_dir: moduledir)
+install_data(furrydownloader_sources, install_dir: moduledir)

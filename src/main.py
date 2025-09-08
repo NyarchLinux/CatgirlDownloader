@@ -24,10 +24,10 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
-from .window import CatgirldownloaderWindow
+from .window import FurrydownloaderWindow
 from .preferenceswindow import PreferencesWindow
 
-class CatgirldownloaderApplication(Adw.Application):
+class FurrydownloaderApplication(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
@@ -47,7 +47,7 @@ class CatgirldownloaderApplication(Adw.Application):
         """
         win = self.props.active_window
         if not win:
-            win = CatgirldownloaderWindow(application=self)
+            win = FurrydownloaderWindow(application=self)
         win.set_title("Furry Downloader")
         self.window = win
         win.present()
@@ -103,5 +103,5 @@ class CatgirldownloaderApplication(Adw.Application):
 
 def main(version):
     """The application's entry point."""
-    app = CatgirldownloaderApplication()
+    app = FurrydownloaderApplication()
     return app.run(sys.argv)

@@ -1,3 +1,3 @@
-# CatgirlDownloader
-A GTK4 application that downloads images of catgirl based on https://nekos.moe
-![](https://example.com/assets/img/catgirldownloader-screenshots.png)
+# FurryDownloader
+A GTK4 application that downloads furry artwork from e621
+![](https://example.com/assets/img/furrydownloader-screenshots.png)

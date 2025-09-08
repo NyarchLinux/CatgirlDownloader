@@ -1,4 +1,4 @@
-project('catgirldownloader',
+project('furrydownloader',
           version: '0.2.8',
     meson_version: '>= 0.59.0',
   default_options: [ 'warning_level=2', 'werror=false', ],

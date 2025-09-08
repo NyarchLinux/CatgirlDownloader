@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Catgirl Downloader
-Comment=Useful application to download catgirl images
-Exec=catgirldownloader
+Name=Furry Downloader
+Comment=Download furry artwork from e621
+Exec=furrydownloader
 Icon=moe.Avelcius.furrydownloader
 Terminal=false
 Type=Application
