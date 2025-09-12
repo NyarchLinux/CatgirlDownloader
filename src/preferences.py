@@ -7,7 +7,8 @@ class UserPreferences:
         self.preferences = {
             "nsfw": False,
         }
-        self.directory = GLib.get_user_config_dir()
+        self.directory = os.path.join(GLib.get_user_config_dir(), "catgirldownloader")
+        os.makedirs(self.directory, exist_ok=True)
         self.file = os.path.join(self.directory, "config.json")
         if not os.path.exists(self.file):
         	f = open(self.file, "w+")
