@@ -10,7 +10,6 @@ class PreferencesWindow(Adw.PreferencesWindow):
         super().__init__(**kwargs)
         self.window = window
         self.settings = UserPreferences()
-        print(self.settings.get_preference("nsfw"))
         self.nsfw_switch.set_state(self.settings.get_preference("nsfw"))
         self.nsfw_switch.connect('notify::active', self.toggle_nsfw)
 

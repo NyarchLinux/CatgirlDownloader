@@ -37,7 +37,6 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.refresh_button.connect("clicked", self.async_reloadimage)
         self.save_button.connect("clicked", self.file_chooser_dialog)
         self.async_reloadimage()
-        print(GLib.get_user_config_dir())
 
     def reloadimage(self, idk=None):
         """Reload current image
