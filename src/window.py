@@ -47,13 +47,12 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.spinner.set_visible(True)
         self.spinner.start()
         # Get catgirl image
-        nsfwsetting = self.settings.get_preference("nsfw")
-        if nsfwsetting:
-            nsfw = True
-        else:
-            nsfw = False
         ct = CatgirlDownloaderAPI()
-        url = ct.get_neko(nsfw)
+        nsfw_mode_setting = self.settings.get_preference("nsfw_mode")
+        if nsfw_mode_setting != None:
+            url = ct.get_neko(nsfw_mode_setting)
+        else:
+            url = ct.get_neko()
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)
