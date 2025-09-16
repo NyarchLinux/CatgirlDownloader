@@ -37,7 +37,6 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.refresh_button.connect("clicked", self.async_reloadimage)
         self.save_button.connect("clicked", self.file_chooser_dialog)
         self.async_reloadimage()
-        print(GLib.get_user_config_dir())
 
     def reloadimage(self, idk=None):
         """Reload current image
@@ -48,13 +47,12 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.spinner.set_visible(True)
         self.spinner.start()
         # Get catgirl image
-        nsfwsetting = self.settings.get_preference("nsfw")
-        if nsfwsetting:
-            nsfw = True
-        else:
-            nsfw = False
         ct = CatgirlDownloaderAPI()
-        url = ct.get_neko(nsfw)
+        nsfw_mode_setting = self.settings.get_preference("nsfw_mode")
+        if nsfw_mode_setting != None:
+            url = ct.get_neko(nsfw_mode_setting)
+        else:
+            url = ct.get_neko()
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)
