@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo Building project...
 rm -rdf build
