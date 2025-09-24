@@ -31,5 +31,5 @@ homepage: "https://github.com/nyarchlinux/catgirldownloader"
 license: "GPL-3.0"
 #changelog: "changelog.yml"
 contents:
-  - src: build/root/usr/
+  - src: root/usr/
     dst: /usr
