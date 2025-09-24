@@ -17,6 +17,8 @@ if [ "$1" = "bundle" ]; then
         flatpak build-bundle ~/.local/share/flatpak/repo "$BUNDLENAME" "$APPID"
 fi
 
+cp nfpm.yaml build/
+cd build
 
 # DEB
 echo Building DEB...
@@ -53,7 +55,3 @@ export DEPENDS_LIBADWAITA=libadwaita
 export DEPENDS_PYTHON_GOBJECT=python-gobject
 export DEPENDS_PYTHON_REQUESTS=python-requests
 nfpm pkg -p archlinux
-
-# AppImage
-echo Building AppImage...
-echo No AppImage support yet!
