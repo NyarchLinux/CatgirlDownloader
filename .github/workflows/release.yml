@@ -15,8 +15,10 @@ jobs:
         run: wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb
       - name: Install nFPM
         run: sudo apt install ./nfpm*.deb
+      - name: Add Flathub
+        run: flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
       - name: Install Flatpak dependencies
-        run: flatpak install org.gnome.Platform/49 org.gnome.Sdk/49
+        run: flatpak --user install org.gnome.Platform/49 org.gnome.Sdk/49
       - name: Build assets
         run: ./package.sh
       - name: Upload assets
