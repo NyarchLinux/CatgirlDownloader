@@ -1,0 +1,23 @@
+name: Release
+
+on: release
+
+jobs:
+  github:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: apt install flatpak flatpak-bundle wget
+          wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb
+          apt install ./nfpm*.deb
+          flatpak install org.gnome.Platform/48 org.gnome.Sdk/48
+      - name: Build assets
+        run: ./package.sh
+      - name: Upload assets
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/catgirl*
