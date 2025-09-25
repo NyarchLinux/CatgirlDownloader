@@ -5,14 +5,15 @@ import json
 class UserPreferences:
     def __init__(self):
         self.preferences = {
-            "nsfw": False,
+            "nsfw_mode": "Block NSFW",
         }
-        self.directory = GLib.get_user_config_dir()
+        self.directory = os.path.join(GLib.get_user_config_dir(), "catgirldownloader")
+        os.makedirs(self.directory, exist_ok=True)
         self.file = os.path.join(self.directory, "config.json")
         if not os.path.exists(self.file):
-        	f = open(self.file, "w+")
-        	f.write(json.dumps(self.preferences))
-        	f.close()
+            f = open(self.file, "w+")
+            f.write(json.dumps(self.preferences))
+            f.close()
         try:
             f = open(self.file, 'r')
             self.preferences = json.loads(f.read())
