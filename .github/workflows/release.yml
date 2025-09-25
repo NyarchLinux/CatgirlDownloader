@@ -12,8 +12,8 @@ jobs:
     steps:
       - name: Disable man-db trigger
         run: |
-          echo "set man-db/auto-update false" | debconf-communicate
-          dpkg-reconfigure man-db
+          echo "set man-db/auto-update false" | sudo debconf-communicate
+          sudo dpkg-reconfigure man-db
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
