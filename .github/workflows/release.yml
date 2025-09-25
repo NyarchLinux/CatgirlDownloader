@@ -10,10 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt install flatpak flatpak-bundle wget &&
-          wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb &&
-          sudo apt install ./nfpm*.deb &&
-          flatpak install org.gnome.Platform/49 org.gnome.Sdk/49
+        run: sudo apt install flatpak flatpak-bundle wget
+      - name: Download nFPM
+        run: wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb
+      - name: Install nFPM
+        run: sudo apt install ./nfpm*.deb
+      - name: Install Flatpak dependencies
+        run: flatpak install org.gnome.Platform/49 org.gnome.Sdk/49
       - name: Build assets
         run: ./package.sh
       - name: Upload assets
