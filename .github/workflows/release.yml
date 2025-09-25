@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo apt install -y --no-install-recommends flatpak flatpak-builder wget
+          sudo apt install -y --no-install-recommends flatpak flatpak-builder wget meson
           wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb
           sudo apt install -y --no-install-recommends ./nfpm*.deb
           flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
