@@ -1,0 +1,35 @@
+# This is an example nfpm configuration file.
+# Make sure to check the documentation at https://nfpm.goreleaser.com
+#
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+name: "catgirldownloader"
+arch: "all"
+platform: "linux"
+version: "1.0.0"
+section: "default"
+priority: "extra"
+replaces:
+provides:
+depends:
+  - ${DEPENDS_PYTHON}
+  - ${DEPENDS_GTK4}
+  - ${DEPENDS_LIBADWAITA}
+  - ${DEPENDS_PYTHON_GOBJECT}
+  - ${DEPENDS_PYTHON_REQUESTS}
+recommends:
+suggests:
+conflicts:
+maintainer: "Totchi Lagawi <chatnoir420 at gmx dot com>"
+description: |
+  A GTK4 application that downloads images of catgirl based on https://nekos.moe
+vendor: "NyarchLinux"
+homepage: "https://github.com/nyarchlinux/catgirldownloader"
+license: "GPL-3.0"
+#changelog: "changelog.yml"
+contents:
+  - src: root/usr/
+    dst: /usr
