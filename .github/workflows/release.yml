@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt install flatpak flatpak-bundle wget
+        run: sudo apt install flatpak flatpak-builder wget
       - name: Download nFPM
         run: wget https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_amd64.deb
       - name: Install nFPM
