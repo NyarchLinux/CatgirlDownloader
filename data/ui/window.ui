@@ -37,8 +37,9 @@
             <property name="homogeneous">true</property>
             <property name="vexpand">true</property>
             <child>
-              <object class="GtkImage" id="image">
+              <object class="GtkPicture" id="image">
                 <property name="visible">false</property>
+                <property name="content-fit">contain</property>
               </object>
             </child>
           </object>

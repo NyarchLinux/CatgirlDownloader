@@ -1,5 +1,6 @@
-from gi.repository import GLib, Gtk, Adw
+from gi.repository import Gtk, Adw
 from .preferences import UserPreferences
+from .types import NSFWOption
 
 @Gtk.Template(resource_path='/moe/nyarchlinux/catgirldownloader/../data/ui/preferences.ui')
 class PreferencesWindow(Adw.PreferencesWindow):
@@ -12,12 +13,12 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.window = window
         self.settings = UserPreferences()
 
-        self._nsfw_options = ["Show everything", "Only NSFW", "Block NSFW"]
+        self._nsfw_options = [option.value for option in NSFWOption]
 
         model = Gtk.StringList.new(self._nsfw_options)
         self.nsfw_dropdown.set_model(model)
 
-        current = self.settings.get_preference("nsfw_mode") or "Block NSFW"
+        current = self.settings.get_preference("nsfw_mode") or NSFWOption.BLOCK_NSFW
         try:
             index = self._nsfw_options.index(current)
         except ValueError:

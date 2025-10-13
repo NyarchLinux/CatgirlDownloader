@@ -49,23 +49,26 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         # Get catgirl image
         ct = CatgirlDownloaderAPI()
         nsfw_mode_setting = self.settings.get_preference("nsfw_mode")
-        if nsfw_mode_setting != None:
-            url = ct.get_neko(nsfw_mode_setting)
+        if nsfw_mode_setting is not None:
+            url = ct.get_image_url(nsfw_mode_setting)
         else:
-            url = ct.get_neko()
+            url = ct.get_image_url()
         self.info = ct.info
         if url is not None:
             content = ct.get_image(url)
         self.imagecontent = content
+
         # Display image
         loader = GdkPixbuf.PixbufLoader()
         loader.write_bytes(GLib.Bytes.new(content))
+
         # Try retrieving image extension and save it for use in file_chooser_dialog later
         image_format = loader.get_format()
         if image_format and image_format.extensions:
             self.image_extension = image_format.extensions[0]
         loader.close()
-        self.image.set_from_pixbuf(loader.get_pixbuf())
+        self.image.set_pixbuf(loader.get_pixbuf())
+
         # Stop loading and display image
         self.spinner.stop()
         self.spinner.set_visible(False)

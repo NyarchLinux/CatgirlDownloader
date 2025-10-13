@@ -32,6 +32,7 @@ catgirldownloader_sources = [
   'catgirl.py',
   'preferences.py',
   'preferenceswindow.py',
+  'types.py',
 ]
 
 install_data(catgirldownloader_sources, install_dir: moduledir)
