@@ -12,7 +12,7 @@ meson install --destdir root -C build
 echo Building Flatpak...
 
 APPID="moe.nyarchlinux.catgirldownloader"
-BUNDLENAME="catgirldownloader-$VERSION.flatpak"
+BUNDLENAME="catgirldownloader.flatpak"
 flatpak-builder --install --user --force-clean flatpak-app "$APPID".json
 flatpak build-bundle ~/.local/share/flatpak/repo "$BUNDLENAME" "$APPID"
 mv $BUNDLENAME build/
