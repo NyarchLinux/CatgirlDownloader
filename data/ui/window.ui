@@ -19,6 +19,22 @@
               <object class="GtkSpinner" id="spinner">
               </object>
             </child>
+            <child type="start">
+              <object class="GtkBox">
+                <property name="spacing">8</property>
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Auto reload</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="auto_reload_switch">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
             <child type="end">
               <object class="GtkButton" id="savebutton">
                 <property name="icon-name">folder-download-symbolic</property>

@@ -21,6 +21,30 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Auto reload interval (seconds)</property>
+                <property name="subtitle" translatable="yes">How often to load a new image when auto reload is enabled</property>
+                <property name="activatable_widget">auto_reload_seconds</property>
+                <child>
+                  <object class="GtkSpinButton" id="auto_reload_seconds">
+                    <property name="valign">center</property>
+                    <property name="numeric">True</property>
+                    <property name="snap-to-ticks">True</property>
+                    <property name="width-chars">6</property>
+                    <property name="adjustment">
+                      <object class="GtkAdjustment">
+                        <property name="lower">1</property>
+                        <property name="upper">3600</property>
+                        <property name="step-increment">1</property>
+                        <property name="page-increment">10</property>
+                        <property name="value">30</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
       </object>
