@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=v1.0.0
+VERSION=v0.3.1
 
 echo Building project...
 rm -rdf build
