@@ -68,12 +68,19 @@ class CatgirldownloaderApplication(Adw.Application):
 
     def on_art_about_action(self, widget, _):
         """Callback for the app.about action."""
-        if hasattr(self.window, "info"):
-            info = self.window.info["images"][0]
-            about = Adw.AboutWindow(transient_for=self.props.active_window,
-                                    artists=[info['artist']],
-                                    website="https://nekos.moe/post/" + info['id'])
-            about.present()
+        if hasattr(self.window, "info") and self.window.info:
+            item = self.window.source_selector.get_selected_item()
+            if item and hasattr(item, "api"):
+                artist = item.api.get_artist(self.window.info)
+                link = item.api.get_link(self.window.info)
+
+                artists = [artist] if artist else []
+                website = link if link else ""
+
+                about = Adw.AboutWindow(transient_for=self.props.active_window,
+                                        artists=artists,
+                                        website=website)
+                about.present()
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""

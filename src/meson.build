@@ -32,7 +32,9 @@ catgirldownloader_sources = [
   'catgirl.py',
   'preferences.py',
   'preferenceswindow.py',
+  'waifu.py',
   'types.py',
+  'api_base.py',
 ]
 
 install_data(catgirldownloader_sources, install_dir: moduledir)

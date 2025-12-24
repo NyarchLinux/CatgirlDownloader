@@ -35,6 +35,11 @@
                 </child>
               </object>
             </child>
+            <child type="title">
+              <object class="GtkDropDown" id="source_selector">
+                <property name="visible">True</property>
+              </object>
+            </child>
             <child type="end">
               <object class="GtkButton" id="savebutton">
                 <property name="icon-name">folder-download-symbolic</property>
