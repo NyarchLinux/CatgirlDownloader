@@ -8,11 +8,17 @@ from .api_base import BaseDownloaderAPI
 class WaifuDownloaderAPI(BaseDownloaderAPI):
     def __init__(self) -> None:
         super().__init__()
-        self.endpoint = "https://api.waifu.im/search?is_nsfw="
+        self.endpoint = "https://api.waifu.im/images"
 
-    def get_page(self, nsfw: bool = False) -> Optional[str]:
+    def get_page(self, nsfw: Optional[bool] = None) -> Optional[str]:
         try:
-            r = requests.get(self.endpoint + str(nsfw).lower(), timeout=10)
+            if nsfw is None:
+                params = {"IsNsfw": "All"}
+            elif nsfw:
+                params = {"IsNsfw": "True"}
+            else:
+                params = {"IsNsfw": "False"}
+            r = requests.get(self.endpoint, params=params, timeout=10)
             if r.status_code == 200:
                 return r.text
             else:
@@ -27,16 +33,17 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         try:
             data = json.loads(response)
             self.info = data
-            return data["images"][0]['url']
+            return data["items"][0]['url']
         except Exception as e:
             print(e)
             return None
 
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:
         nsfw = False
-        # Handle both Enum and string input
         if nsfw_mode == NSFWOption.ONLY_NSFW or nsfw_mode == NSFWOption.ONLY_NSFW.value:
             nsfw = True
+        elif nsfw_mode == NSFWOption.SHOW_EVERYTHING or nsfw_mode == NSFWOption.SHOW_EVERYTHING.value:
+            nsfw = None
         return self.get_page_url(self.get_page(nsfw))
 
     def get_artist(self, info: Optional[dict] = None) -> Optional[str]:
@@ -44,11 +51,11 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         if not data:
             return None
         try:
-            image_info = data['images'][0]
-            artist = image_info.get('artist')
-            if isinstance(artist, dict):
-                return artist.get('name')
-            return str(artist) if artist else None
+            image_info = data['items'][0]
+            artists = image_info.get('artists')
+            if isinstance(artists, list) and artists:
+                return artists[0].get('name')
+            return None
         except Exception:
             return None
 
@@ -57,7 +64,7 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         if not data:
             return None
         try:
-            return data['images'][0].get('source')
+            return data['items'][0].get('source')
         except Exception:
             return None
 
@@ -65,7 +72,7 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         data = info if info else self.info
         try:
             if data:
-                image_id = data['images'][0].get('image_id', 'unknown')
+                image_id = data['items'][0].get('id', 'unknown')
             else:
                 raise Exception("No info")
         except Exception:
