@@ -23,6 +23,7 @@ from gi.repository import Gtk, Adw, GdkPixbuf, GLib, Gio, GObject
 
 from .catgirl import CatgirlDownloaderAPI
 from .waifu import WaifuDownloaderAPI
+from .danbooru import DanbooruDownloaderAPI
 from .preferences import UserPreferences
 
 
@@ -94,6 +95,11 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             "name": "Waifu",
             "description": "Generate images from waifu.im.",
             "class": WaifuDownloaderAPI
+        },
+        "danbooru": {
+            "name": "Danbooru",
+            "description": "Generate images from danbooru.donmai.us with custom tags.",
+            "class": DanbooruDownloaderAPI
         }
     }
 
@@ -220,7 +226,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
              settings_btn.disconnect(settings_btn._handler_id)
         
         def on_settings_clicked(btn):
-            item.api.open_settings_window(self)
+            item.api.open_settings_window(btn)
             
         settings_btn._handler_id = settings_btn.connect("clicked", on_settings_clicked)
 
