@@ -67,12 +67,13 @@ def load_image_with_callback(url, callback, error_callback=None):
 class SourceItem(GObject.Object):
     __gtype_name__ = 'SourceItem'
 
-    def __init__(self, id, name, description, api):
+    def __init__(self, id, name, description, api, icon=None):
         super().__init__()
         self.id = id
         self.name = name
         self.description = description
         self.api = api
+        self.icon = icon
 
 @Gtk.Template(resource_path='/moe/nyarchlinux/catgirldownloader/../data/ui/window.ui')
 class CatgirldownloaderWindow(Adw.ApplicationWindow):
@@ -89,17 +90,20 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         "catgirl": {
             "name": "Catgirl",
             "description": "Generate images from nekos.moe.",
-            "class": CatgirlDownloaderAPI
+            "class": CatgirlDownloaderAPI,
+            "icon": "moe.nyarchlinux.catgirldownloader"
         },
         "waifu": {
             "name": "Waifu",
             "description": "Generate images from waifu.im.",
-            "class": WaifuDownloaderAPI
+            "class": WaifuDownloaderAPI,
+            "icon": "moe.nyarchlinux.waifudownloader"
         },
         "danbooru": {
             "name": "Danbooru",
             "description": "Generate images from danbooru.donmai.us with custom tags.",
-            "class": DanbooruDownloaderAPI
+            "class": DanbooruDownloaderAPI,
+            "icon": "danbooru"
         }
     }
 
@@ -117,7 +121,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         for i, (key, value) in enumerate(self.AVAILABLE_SOURCES.items()):
             api = value["class"](settings=self.settings)
             self.downloaders[key] = api
-            item = SourceItem(key, value["name"], value.get("description", ""), api)
+            item = SourceItem(key, value["name"], value.get("description", ""), api, value.get("icon"))
             self.source_store.append(item)
             if key == saved_source:
                 default_index = i
@@ -181,7 +185,14 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         box.set_margin_end(6)
 
         avatar = Adw.Avatar(size=32)
+        avatar.set_show_initials(True)
+        avatar.set_visible(False)
         box.append(avatar)
+
+        image = Gtk.Image(icon_size=Gtk.IconSize.LARGE)
+        image.set_size_request(32, 32)
+        image.set_visible(False)
+        box.append(image)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         vbox.set_valign(Gtk.Align.CENTER)
@@ -211,9 +222,18 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         item = list_item.get_item()
         
         avatar = box.get_first_child()
-        avatar.set_text(item.name)
+        image = avatar.get_next_sibling()
         
-        vbox = avatar.get_next_sibling()
+        if item.icon:
+            avatar.set_visible(False)
+            image.set_visible(True)
+            image.set_from_icon_name(item.icon)
+        else:
+            image.set_visible(False)
+            avatar.set_visible(True)
+            avatar.set_text(item.name)
+        
+        vbox = image.get_next_sibling()
         title_label = vbox.get_first_child()
         title_label.set_label(item.name)
         
