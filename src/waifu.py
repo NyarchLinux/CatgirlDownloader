@@ -6,7 +6,7 @@ from .types import NSFWOption
 from .api_base import BaseDownloaderAPI
 
 class WaifuDownloaderAPI(BaseDownloaderAPI):
-    def __init__(self) -> None:
+    def __init__(self, settings=None) -> None:
         super().__init__()
         self.endpoint = "https://api.waifu.im/images"
 

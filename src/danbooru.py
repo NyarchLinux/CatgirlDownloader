@@ -8,11 +8,16 @@ from .api_base import BaseDownloaderAPI
 
 
 class DanbooruDownloaderAPI(BaseDownloaderAPI):
-    def __init__(self) -> None:
+    def __init__(self, settings=None) -> None:
         super().__init__()
         self.endpoint = "https://danbooru.donmai.us"
-        self.tags: str = ""
+        self._settings = settings
+        self._load_tags()
         self._settings_window = None
+
+    def _load_tags(self) -> None:
+        if self._settings:
+            self.tags = self._settings.get_preference("danbooru_tags") or ""
 
     def set_tags(self, tags: str) -> None:
         self.tags = tags
@@ -160,3 +165,5 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
 
     def _on_tags_changed(self, entry: Any, window: Any) -> None:
         self.tags = entry.get_text()
+        if self._settings:
+            self._settings.set_preference("danbooru_tags", self.tags)
