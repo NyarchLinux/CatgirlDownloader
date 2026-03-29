@@ -7,6 +7,7 @@ from typing import Optional, Any
 from .types import NSFWOption
 from .api_base import BaseDownloaderAPI
 
+# TODO: Surely, there must be a better way to encode these. I don't think listing the tags explicitly would be a good idea. --PCBoy
 _FORBIDDEN_TAG_1 = base64.b64decode('c2hvdGE='.encode('utf-8')).decode('utf-8')
 _FORBIDDEN_TAG_2 = base64.b64decode('bG9saQ=='.encode('utf-8')).decode('utf-8')
 
@@ -170,6 +171,8 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         row.set_child(vbox)
         group.add(row)
 
+        window.connect("close-request", lambda e: self._on_prefs_close(entry, parent))
+
         self._settings_window = window
         window.present()
 
@@ -182,3 +185,28 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         self.tags = ' '.join(tagcheck)
         if self._settings:
             self._settings.set_preference("danbooru_tags", self.tags)
+
+    def _on_prefs_close(self, text: Any, parent: Any) -> None:
+        tagcheck = text.get_text().lower().split()
+        if _FORBIDDEN_TAG_1 in tagcheck or _FORBIDDEN_TAG_2 in tagcheck:
+            self.open_forbid_tag_notif(parent)
+
+    def open_forbid_tag_notif(self, parent: Any) -> None:
+        from gi.repository import Gtk, Adw
+
+        dialog = Adw.MessageDialog(
+            modal = True,
+            heading = "Danbooru Settings",
+        )
+        dialog.set_body_use_markup(True)
+        dialog.set_body('Due to a limitation of Danbooru, certain tags have been automatically removed from your settings. For more information, please visit <a href="https://danbooru.donmai.us/wiki_pages/help:censored_tags">Danbooru\'s "censored tags" help page</a>.')
+
+        if isinstance(parent, Gtk.Window):
+            dialog.set_transient_for(parent)
+        else:
+            toplevel = parent.get_ancestor(Gtk.Window)
+            if toplevel:
+                dialog.set_transient_for(toplevel)
+
+        dialog.add_response("ok", "OK")
+        dialog.present()
