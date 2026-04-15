@@ -45,6 +45,21 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Blacklist Tags</property>
+                <property name="subtitle" translatable="yes">Tags to exclude (space separated, e.g., loli shota)</property>
+                <property name="activatable_widget">blacklist_tags_entry</property>
+                <child>
+                  <object class="GtkEntry" id="blacklist_tags_entry">
+                    <property name="valign">center</property>
+                    <property name="placeholder_text">e.g., loli shota</property>
+                    <property name="hexpand">True</property>
+                    <property name="tooltip_text">Enter tags separated by spaces. Do not use the same tags as Search Tags to avoid conflicts.</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
       </object>
