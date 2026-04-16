@@ -11,22 +11,13 @@ class CatgirlDownloaderAPI(BaseDownloaderAPI):
         super().__init__()
         self.endpoint = "https://nekos.moe/api/v1/random/image"
         self._settings = settings
-        if settings:
-            self.blacklist_tags = settings.get_preference("blacklist_tags") or ""
-        else:
-            self.blacklist_tags = ""
-
-    def get_blacklist_tags(self) -> str:
-        return self.blacklist_tags
+        self.blacklist_tags = (
+            settings.get_preference("blacklist_tags") if settings else ""
+        )
 
     def get_random_image_id(
         self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW, max_retries: int = 5
     ) -> Optional[str]:
-        blacklist = (
-            self.blacklist_tags.strip().lower().split() if self.blacklist_tags else []
-        )
-        blacklist = [tag for tag in blacklist if tag]
-
         for attempt in range(max_retries):
             try:
                 url = self.endpoint
@@ -51,21 +42,18 @@ class CatgirlDownloaderAPI(BaseDownloaderAPI):
             try:
                 data = json.loads(r.text)
                 self.info = data
-
                 image_data = data.get("images", [])
                 if not image_data:
                     return None
 
                 image = image_data[0]
-                image_tags = [tag.lower() for tag in image.get("tags", [])]
-
-                if blacklist:
-                    matched = [tag for tag in blacklist if tag in image_tags]
-                    if matched:
-                        print(
-                            f"Attempt {attempt + 1}: Blacklisted tags found: {matched}, retrying..."
-                        )
-                        continue
+                image_tags = image.get("tags", [])
+                matched = self._check_blacklist_match(image_tags)
+                if matched:
+                    print(
+                        f"Attempt {attempt + 1}: Blacklisted tags found: {matched}, retrying..."
+                    )
+                    continue
 
                 return image["id"]
             except Exception:
@@ -104,18 +92,12 @@ class CatgirlDownloaderAPI(BaseDownloaderAPI):
         self, extension: Optional[str], info: Optional[dict] = None
     ) -> str:
         data = info if info else self.info
-        if not data:
-            import time
-
-            image_id = str(int(time.time()))
-        else:
-            try:
-                image_id = data["images"][0]["id"]
-            except Exception:
-                import time
-
-                image_id = str(int(time.time()))
-
+        image_id = self.get_filename_id(data.get("images")[0] if data else None)
         if extension:
             return f"nekos.moe_{image_id}.{extension}"
         return f"nekos.moe_{image_id}"
+
+    def get_filename_id(self, info: dict = None) -> str:
+        if info:
+            return info.get("id", super().get_filename_id())
+        return super().get_filename_id()

@@ -39,16 +39,11 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
 
     def check_search_blacklist_conflict(self) -> list:
         search_tags = set(self.tags.strip().lower().split()) if self.tags else set()
-        blacklist_tags = (
-            set(self.blacklist_tags.strip().lower().split())
-            if self.blacklist_tags
-            else set()
-        )
+        blacklist_tags = set(self._parse_blacklist())
         return list(search_tags & blacklist_tags)
 
     def _build_tags_query(self, nsfw_mode: NSFWOption) -> str:
         tags = self.tags.strip() if self.tags else ""
-        blacklist = self.blacklist_tags.strip() if self.blacklist_tags else ""
 
         if (
             nsfw_mode == NSFWOption.BLOCK_NSFW
@@ -62,16 +57,15 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         else:
             rating_tag = None
 
-        blacklist_parts = [f"-{tag}" for tag in blacklist.split() if tag]
-        blacklist_str = " ".join(blacklist_parts)
+        blacklist_parts = [f"-{tag}" for tag in self._parse_blacklist()]
 
         query_parts = []
         if tags:
             query_parts.append(tags)
         if rating_tag:
             query_parts.append(rating_tag)
-        if blacklist_str:
-            query_parts.append(blacklist_str)
+        if blacklist_parts:
+            query_parts.extend(blacklist_parts)
 
         return " ".join(query_parts)
 
@@ -103,20 +97,12 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
                         )
                         continue
 
-                    blacklist = (
-                        self.blacklist_tags.strip().lower().split()
-                        if self.blacklist_tags
-                        else ""
-                    )
-                    blacklist = [tag for tag in blacklist if tag]
-                    if blacklist:
-                        post_tags_lower = [t.lower() for t in post_tags]
-                        matched = [tag for tag in blacklist if tag in post_tags_lower]
-                        if matched:
-                            print(
-                                f"Attempt {attempt + 1}: Blacklisted tags found: {matched}, retrying..."
-                            )
-                            continue
+                    matched = self._check_blacklist_match(post_tags)
+                    if matched:
+                        print(
+                            f"Attempt {attempt + 1}: Blacklisted tags found: {matched}, retrying..."
+                        )
+                        continue
 
                     self.info = post
                     return post
@@ -162,17 +148,15 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         self, extension: Optional[str], info: Optional[dict] = None
     ) -> str:
         data = info if info else self.info
-        if not data:
-            post_id = str(int(time.time()))
-        else:
-            try:
-                post_id = str(data.get("id", int(time.time())))
-            except Exception:
-                post_id = str(int(time.time()))
-
+        post_id = self.get_filename_id(data)
         if extension:
             return f"danbooru_{post_id}.{extension}"
         return f"danbooru_{post_id}"
+
+    def get_filename_id(self, info: dict = None) -> str:
+        if info:
+            return str(info.get("id", super().get_filename_id()))
+        return super().get_filename_id()
 
     def open_settings_window(self, parent: Any) -> None:
         from gi.repository import Gtk, Adw

@@ -11,13 +11,9 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         super().__init__()
         self.endpoint = "https://api.waifu.im/images"
         self._settings = settings
-        if settings:
-            self.blacklist_tags = settings.get_preference("blacklist_tags") or ""
-        else:
-            self.blacklist_tags = ""
-
-    def get_blacklist_tags(self) -> str:
-        return self.blacklist_tags
+        self.blacklist_tags = (
+            settings.get_preference("blacklist_tags") if settings else ""
+        )
 
     def get_page(self, nsfw: Optional[bool] = None) -> Optional[str]:
         try:
@@ -30,11 +26,9 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
             else:
                 params["IsNsfw"] = "False"
 
-            blacklist = self.blacklist_tags.strip() if self.blacklist_tags else ""
-            if blacklist:
-                excluded = [tag for tag in blacklist.split() if tag]
-                for tag in excluded:
-                    params["ExcludedTags"] = tag
+            blacklist = self._parse_blacklist()
+            for tag in blacklist:
+                params["ExcludedTags"] = tag
 
             r = requests.get(self.endpoint, params=params, timeout=10)
             if r.status_code == 200:
@@ -96,16 +90,12 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
         self, extension: Optional[str], info: Optional[dict] = None
     ) -> str:
         data = info if info else self.info
-        try:
-            if data:
-                image_id = data["items"][0].get("id", "unknown")
-            else:
-                raise Exception("No info")
-        except Exception:
-            import time
-
-            image_id = str(int(time.time()))
-
+        image_id = self.get_filename_id(data.get("items")[0] if data else None)
         if extension:
             return f"waifu.im_{image_id}.{extension}"
         return f"waifu.im_{image_id}"
+
+    def get_filename_id(self, info: dict = None) -> str:
+        if info:
+            return info.get("id", super().get_filename_id())
+        return super().get_filename_id()
