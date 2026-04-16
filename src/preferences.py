@@ -2,6 +2,7 @@ from gi.repository import GLib
 import os
 import json
 
+
 class UserPreferences:
     def __init__(self):
         self._defaults = {
@@ -9,6 +10,7 @@ class UserPreferences:
             "auto_reload_enabled": False,
             "auto_reload_interval": 5,
             "danbooru_tags": "",
+            "blacklist_tags": "",
         }
         self.preferences = dict(self._defaults)
         self.directory = os.path.join(GLib.get_user_config_dir(), "catgirldownloader")
@@ -19,7 +21,7 @@ class UserPreferences:
             f.write(json.dumps(self.preferences))
             f.close()
         try:
-            f = open(self.file, 'r')
+            f = open(self.file, "r")
             self.preferences = json.loads(f.read())
             f.close()
             changed = False
@@ -34,7 +36,7 @@ class UserPreferences:
 
     def reload_preferences(self):
         try:
-            f = open(self.file, 'r')
+            f = open(self.file, "r")
             self.preferences = json.loads(f.read())
             f.close()
             for k, v in self._defaults.items():
@@ -49,6 +51,7 @@ class UserPreferences:
             return self.preferences[key]
         else:
             return None
+
     def set_preference(self, key, value):
         self.preferences[key] = value
         try:

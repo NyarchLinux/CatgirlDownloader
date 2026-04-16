@@ -30,42 +30,57 @@ from .preferences import UserPreferences
 def load_image_with_callback(url, callback, error_callback=None):
     """
     Load an image from URL and call the callback with the pixbuf loader when complete.
-    
+
     Args:
         url (str): The URL of the image to load
         callback (callable): Function to call when image is loaded successfully.
                            Should accept (pixbuf_loader, content_bytes) as argument
         error_callback (callable, optional): Function to call on error.
                                            Should accept (exception) as argument
-    """ 
+    """
+
     def _load_image():
         pixbuf_loader = GdkPixbuf.PixbufLoader()
         data = bytearray()
         try:
             response = requests.get(url, stream=True)
             response.raise_for_status()
-            
+
             for chunk in response.iter_content(chunk_size=1024):
                 data.extend(chunk)
                 pixbuf_loader.write(chunk)
-            
+
             pixbuf_loader.close()
-            
+
             # Schedule callback on main thread
             GLib.idle_add(callback, pixbuf_loader, bytes(data))
-            
+
         except Exception as e:
             print(f"Exception loading image: {e}")
             if error_callback:
                 GLib.idle_add(error_callback, e)
-    
+
     # Run the loading in a separate thread to avoid blocking the UI
     thread = threading.Thread(target=_load_image)
     thread.daemon = True
     thread.start()
 
+
+def check_tag_conflict(settings, source_id):
+    """Check if search tags and blacklist tags conflict for the given source."""
+    settings.reload_preferences()
+    blacklist = settings.get_preference("blacklist_tags") or ""
+
+    if source_id == "danbooru":
+        danbooru = DanbooruDownloaderAPI(settings=settings)
+        danbooru.reload_settings()
+        return danbooru.check_search_blacklist_conflict()
+
+    return []
+
+
 class SourceItem(GObject.Object):
-    __gtype_name__ = 'SourceItem'
+    __gtype_name__ = "SourceItem"
 
     def __init__(self, id, name, description, api, icon=None):
         super().__init__()
@@ -75,9 +90,10 @@ class SourceItem(GObject.Object):
         self.api = api
         self.icon = icon
 
-@Gtk.Template(resource_path='/moe/nyarchlinux/catgirldownloader/../data/ui/window.ui')
+
+@Gtk.Template(resource_path="/moe/nyarchlinux/catgirldownloader/../data/ui/window.ui")
 class CatgirldownloaderWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'CatgirldownloaderWindow'
+    __gtype_name__ = "CatgirldownloaderWindow"
 
     refresh_button = Gtk.Template.Child("refresh_button")
     spinner = Gtk.Template.Child("spinner")
@@ -91,20 +107,20 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             "name": "Catgirl",
             "description": "Generate images from nekos.moe.",
             "class": CatgirlDownloaderAPI,
-            "icon": "moe.nyarchlinux.catgirldownloader"
+            "icon": "moe.nyarchlinux.catgirldownloader",
         },
         "waifu": {
             "name": "Waifu",
             "description": "Generate images from waifu.im.",
             "class": WaifuDownloaderAPI,
-            "icon": "moe.nyarchlinux.waifudownloader"
+            "icon": "moe.nyarchlinux.waifudownloader",
         },
         "danbooru": {
             "name": "Danbooru",
             "description": "Generate images from danbooru.donmai.us with custom tags.",
             "class": DanbooruDownloaderAPI,
-            "icon": "danbooru"
-        }
+            "icon": "danbooru",
+        },
     }
 
     def __init__(self, **kwargs):
@@ -113,7 +129,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
 
         self.downloaders = {}
         self.source_store = Gio.ListStore(item_type=SourceItem)
-        
+
         saved_source = self.settings.get_preference("source")
         default_index = 0
         found_source = False
@@ -121,32 +137,34 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         for i, (key, value) in enumerate(self.AVAILABLE_SOURCES.items()):
             api = value["class"](settings=self.settings)
             self.downloaders[key] = api
-            item = SourceItem(key, value["name"], value.get("description", ""), api, value.get("icon"))
+            item = SourceItem(
+                key, value["name"], value.get("description", ""), api, value.get("icon")
+            )
             self.source_store.append(item)
             if key == saved_source:
                 default_index = i
                 found_source = True
-        
+
         if not found_source and self.source_store.get_n_items() > 0:
             default_index = 0
 
         self.source_selector.set_model(self.source_store)
-        
+
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.setup_source_item)
         factory.connect("bind", self.bind_source_item)
         self.source_selector.set_factory(factory)
-        
+
         # Configure list factory for the dropdown list to use the complex layout
         self.source_selector.set_list_factory(factory)
-        
+
         # Configure a simple factory for the selected item display (button content)
         # We just want the name of the source here
         button_factory = Gtk.SignalListItemFactory()
         button_factory.connect("setup", self.setup_source_button_item)
         button_factory.connect("bind", self.bind_source_button_item)
         self.source_selector.set_factory(button_factory)
-        
+
         self.source_selector.set_selected(default_index)
         self.source_selector.connect("notify::selected-item", self.on_source_changed)
 
@@ -197,17 +215,17 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         vbox.set_valign(Gtk.Align.CENTER)
         vbox.set_hexpand(True)
-        
+
         title_label = Gtk.Label(halign=Gtk.Align.START)
         title_label.add_css_class("heading")
         vbox.append(title_label)
-        
+
         desc_label = Gtk.Label(halign=Gtk.Align.START)
         desc_label.add_css_class("caption")
         desc_label.set_wrap(True)
         desc_label.set_max_width_chars(30)
         vbox.append(desc_label)
-        
+
         box.append(vbox)
 
         settings_btn = Gtk.Button(icon_name="emblem-system-symbolic")
@@ -220,10 +238,10 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
     def bind_source_item(self, factory, list_item):
         box = list_item.get_child()
         item = list_item.get_item()
-        
+
         avatar = box.get_first_child()
         image = avatar.get_next_sibling()
-        
+
         if item.icon:
             avatar.set_visible(False)
             image.set_visible(True)
@@ -232,22 +250,22 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             image.set_visible(False)
             avatar.set_visible(True)
             avatar.set_text(item.name)
-        
+
         vbox = image.get_next_sibling()
         title_label = vbox.get_first_child()
         title_label.set_label(item.name)
-        
+
         desc_label = title_label.get_next_sibling()
         desc_label.set_label(item.description)
-        
+
         settings_btn = vbox.get_next_sibling()
-        
+
         if hasattr(settings_btn, "_handler_id"):
-             settings_btn.disconnect(settings_btn._handler_id)
-        
+            settings_btn.disconnect(settings_btn._handler_id)
+
         def on_settings_clicked(btn):
             item.api.open_settings_window(btn)
-            
+
         settings_btn._handler_id = settings_btn.connect("clicked", on_settings_clicked)
 
     def on_source_changed(self, dropdown, _pspec):
@@ -322,8 +340,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         return False
 
     def async_reloadimage(self, az=None):
-        """Call the function to load the image on another thread
-        """
+        """Call the function to load the image on another thread"""
         if self._is_loading:
             return
         self._is_loading = True
@@ -340,12 +357,14 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             # Fallback if no selection
             if self.source_store.get_n_items() > 0:
                 source_id = self.source_store.get_item(0).id
-        
+
         # Should not happen if store populated, but handle safely
         if not source_id and self.downloaders:
-             source_id = next(iter(self.downloaders))
+            source_id = next(iter(self.downloaders))
 
-        t = threading.Thread(target=self._fetch_url_thread, args=[source_id], daemon=True)
+        t = threading.Thread(
+            target=self._fetch_url_thread, args=[source_id], daemon=True
+        )
         t.start()
 
     def _fetch_url_thread(self, source_id=None):
@@ -353,22 +372,33 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             if not source_id:
                 source_id = next(iter(self.downloaders))
 
+            conflicts = check_tag_conflict(self.settings, source_id)
+            if conflicts:
+                GLib.idle_add(self._on_tag_conflict_error, conflicts)
+                return
+
             ct = self.downloaders.get(source_id)
             if not ct:
                 ct = self.downloaders[next(iter(self.downloaders))]
-                
+
             nsfw_mode_setting = self.settings.get_preference("nsfw_mode")
-            url = ct.get_image_url(nsfw_mode_setting) if nsfw_mode_setting is not None else ct.get_image_url()
+            url = (
+                ct.get_image_url(nsfw_mode_setting)
+                if nsfw_mode_setting is not None
+                else ct.get_image_url()
+            )
             info = getattr(ct, "info", None)
-            
+
             if url:
                 load_image_with_callback(
-                    url, 
-                    lambda loader, data: self._on_image_loaded(loader, data, info), 
-                    self._on_image_error
+                    url,
+                    lambda loader, data: self._on_image_loaded(loader, data, info),
+                    self._on_image_error,
                 )
             else:
-                 GLib.idle_add(self._on_image_error, Exception("Could not retrieve image URL"))
+                GLib.idle_add(
+                    self._on_image_error, Exception("Could not retrieve image URL")
+                )
         except Exception as e:
             print(f"Error fetching URL: {e}")
             GLib.idle_add(self._on_image_error, e)
@@ -377,23 +407,44 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         try:
             self.info = info
             self.imagecontent = content
-            
+
             # Loader is already closed and should have pixbuf
             self.image.set_pixbuf(loader.get_pixbuf())
-            
+
             image_format = loader.get_format()
             if image_format and image_format.extensions:
                 self.image_extension = image_format.extensions[0]
-                
+
             self.image.set_visible(True)
         except Exception as e:
             print(f"Error displaying image: {e}")
         finally:
             self._finish_loading()
-            
+
     def _on_image_error(self, error):
         print(f"Image loading error: {error}")
         self._finish_loading()
+
+    def _on_tag_conflict_error(self, conflicts):
+        self.spinner.stop()
+        self.spinner.set_visible(False)
+        self._is_loading = False
+
+        from gi.repository import Adw
+
+        dialog = Adw.MessageDialog(modal=True, heading="Tag Conflict Detected")
+        dialog.set_body_use_markup(True)
+        dialog.set_body(
+            f"The following tags are in both Search and Blacklist:\n"
+            f"<b>{', '.join(conflicts)}</b>\n\n"
+            f"This will result in no images being found. Please remove these tags from either Search or Blacklist in Preferences."
+        )
+        dialog.add_response("ok", "OK")
+        dialog.present()
+
+        if self.auto_reload_switch.get_active():
+            self.auto_reload_switch.set_active(False)
+            self.settings.set_preference("auto_reload_enabled", False)
 
     def _finish_loading(self):
         self.spinner.stop()
@@ -403,29 +454,31 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             self._schedule_next_auto_reload()
 
     def file_chooser_dialog(self, ae=None):
-        """Displays the dialog to save the image
-        """
+        """Displays the dialog to save the image"""
         if not self.info:
             return
-        self.dialog = Gtk.FileChooserDialog(title="Save file", parent=self,
-                                            action=Gtk.FileChooserAction.SAVE)
+        self.dialog = Gtk.FileChooserDialog(
+            title="Save file", parent=self, action=Gtk.FileChooserAction.SAVE
+        )
 
         source_id = None
         item = self.source_selector.get_selected_item()
         if item:
             source_id = item.id
-        
+
         if not source_id:
-             if self.source_store.get_n_items() > 0:
-                 source_id = self.source_store.get_item(0).id
-             elif self.downloaders:
-                 source_id = next(iter(self.downloaders))
+            if self.source_store.get_n_items() > 0:
+                source_id = self.source_store.get_item(0).id
+            elif self.downloaders:
+                source_id = next(iter(self.downloaders))
 
         downloader = self.downloaders.get(source_id)
-        
+
         current_name = "image"
         if downloader:
-             current_name = downloader.get_filename_suggestion(self.image_extension, self.info)
+            current_name = downloader.get_filename_suggestion(
+                self.image_extension, self.info
+            )
 
         if self.image_extension:
             # If we know the extension, add a filter for it
@@ -434,13 +487,13 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             image_filter.set_name(f"{file_extension.upper()} files")
             image_filter.add_pattern(f"*.{file_extension}")
             self.dialog.add_filter(image_filter)
-        
+
         self.dialog.set_current_name(current_name)
 
         # Buttons
-        self.dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
-        self.dialog.add_button('Save', Gtk.ResponseType.OK)
-        self.dialog.connect('response', self.responsehandler)
+        self.dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        self.dialog.add_button("Save", Gtk.ResponseType.OK)
+        self.dialog.connect("response", self.responsehandler)
         self.dialog.show()
 
     def responsehandler(self, dialog, response_id):
