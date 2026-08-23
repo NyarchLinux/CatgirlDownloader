@@ -27,7 +27,7 @@ from .danbooru import DanbooruDownloaderAPI
 from .preferences import UserPreferences
 
 
-def load_image_with_callback(url, callback, error_callback=None):
+def load_image_with_callback(url, callback, error_callback=None, headers=None):
     """
     Load an image from URL and call the callback with the pixbuf loader when complete.
     
@@ -42,7 +42,7 @@ def load_image_with_callback(url, callback, error_callback=None):
         pixbuf_loader = GdkPixbuf.PixbufLoader()
         data = bytearray()
         try:
-            response = requests.get(url, stream=True)
+            response = requests.get(url, headers=headers, stream=True, timeout=30)
             response.raise_for_status()
             
             for chunk in response.iter_content(chunk_size=1024):
@@ -365,7 +365,8 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
                 load_image_with_callback(
                     url, 
                     lambda loader, data: self._on_image_loaded(loader, data, info), 
-                    self._on_image_error
+                    self._on_image_error,
+                    ct.get_request_headers(),
                 )
             else:
                  GLib.idle_add(self._on_image_error, Exception("Could not retrieve image URL"))

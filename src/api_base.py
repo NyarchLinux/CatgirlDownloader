@@ -22,7 +22,7 @@ class BaseDownloaderAPI(ABC):
 
     def get_image(self, url: str) -> Optional[bytes]:
         try:
-            r = requests.get(url, timeout=20)
+            r = requests.get(url, headers=self.get_request_headers(), timeout=20)
             # The original implementations didn't check status code explicitly in get_image
             # but usually relied on the caller or just returned content.
             # We'll return content if successful, or None on error for safety.
@@ -32,6 +32,10 @@ class BaseDownloaderAPI(ABC):
         except Exception as e:
             print(f"Error downloading image: {e}")
             return None
+
+    def get_request_headers(self) -> dict[str, str]:
+        """Return HTTP headers required by this image source."""
+        return {}
 
     @abstractmethod
     def get_filename_suggestion(self, extension: Optional[str], info: Optional[dict] = None) -> str:
@@ -55,4 +59,3 @@ class BaseDownloaderAPI(ABC):
             app = parent.get_application()
             if app:
                 app.activate_action("preferences", None)
-

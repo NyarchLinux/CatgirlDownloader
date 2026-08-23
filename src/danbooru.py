@@ -10,6 +10,9 @@ from .api_base import BaseDownloaderAPI
 # TODO: Surely, there must be a better way to encode these. I don't think listing the tags explicitly would be a good idea. --PCBoy
 _FORBIDDEN_TAG_1 = base64.b64decode('c2hvdGE='.encode('utf-8')).decode('utf-8')
 _FORBIDDEN_TAG_2 = base64.b64decode('bG9saQ=='.encode('utf-8')).decode('utf-8')
+_REQUEST_HEADERS = {
+    "User-Agent": "CatgirlDownloader/1.0 (+https://github.com/NyarchLinux/CatgirlDownloader)"
+}
 
 class DanbooruDownloaderAPI(BaseDownloaderAPI):
     def __init__(self, settings=None) -> None:
@@ -22,12 +25,17 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
     def _load_tags(self) -> None:
         if self._settings:
             self.tags = self._settings.get_preference("danbooru_tags") or ""
+        else:
+            self.tags = ""
 
     def set_tags(self, tags: str) -> None:
         self.tags = tags
 
     def get_tags(self) -> str:
         return self.tags
+
+    def get_request_headers(self) -> dict[str, str]:
+        return dict(_REQUEST_HEADERS)
 
     def _build_tags_query(self, nsfw_mode: NSFWOption) -> str:
         tags = self.tags.strip() if self.tags else ""
@@ -55,7 +63,12 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
                 }
                 if tags:
                     params["tags"] = tags
-                r = requests.get(f"{self.endpoint}/posts.json", params=params, timeout=10)
+                r = requests.get(
+                    f"{self.endpoint}/posts.json",
+                    params=params,
+                    headers=_REQUEST_HEADERS,
+                    timeout=10,
+                )
                 if r.status_code != 200:
                     return None
             except Exception as e:
