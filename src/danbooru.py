@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import base64
+import threading
 from typing import Optional, Any
 
 from .types import NSFWOption
@@ -14,6 +15,9 @@ _REQUEST_HEADERS = {
     "User-Agent": "CatgirlDownloader/1.0 (+https://github.com/NyarchLinux/CatgirlDownloader)"
 }
 _BATCH_SIZE = 20
+_MAX_ANONYMOUS_TAGS = 2
+_SUGGESTION_DELAY_MS = 300
+_SUGGESTION_LIMIT = 10
 _FALLBACK_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
 
 
@@ -28,6 +32,133 @@ def _displayable_extensions() -> set[str]:
         return exts or set(_FALLBACK_EXTENSIONS)
     except Exception:
         return set(_FALLBACK_EXTENSIONS)
+
+
+def _is_forbidden_tag(name: str) -> bool:
+    words = name.lower().split("_")
+    return _FORBIDDEN_TAG_1 in words or _FORBIDDEN_TAG_2 in words
+
+
+def _fetch_tag_suggestions(word: str) -> list[tuple[str, int]]:
+    """Most used Danbooru tags starting with 'word', as (name, post count)."""
+    try:
+        r = requests.get(
+            "https://danbooru.donmai.us/tags.json",
+            params={
+                "search[name_matches]": f"{word}*",
+                "search[order]": "count",
+                "limit": _SUGGESTION_LIMIT,
+            },
+            headers=_REQUEST_HEADERS,
+            timeout=10,
+        )
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        print(f"Tag autocomplete failed: {e}")
+        return []
+    if not isinstance(data, list):
+        return []
+    return [(tag["name"], tag.get("post_count", 0))
+            for tag in data
+            if isinstance(tag, dict) and tag.get("name")
+            and not _is_forbidden_tag(tag["name"])]
+
+
+class _TagAutocomplete:
+    """Suggests existing Danbooru tags for the word under the cursor of an entry."""
+
+    def __init__(self, entry: Any, listbox: Any, revealer: Any) -> None:
+        self._entry = entry
+        self._listbox = listbox
+        self._revealer = revealer
+        self._timeout_id = 0
+        self._generation = 0
+        self._suppress = False
+        entry.connect("changed", self._on_changed)
+        listbox.connect("row-activated", self._on_row_activated)
+
+    def _current_word(self) -> tuple[int, int]:
+        """Start and end offsets of the word under the cursor."""
+        text = self._entry.get_text()
+        pos = self._entry.get_position()
+        start = text.rfind(" ", 0, pos) + 1
+        end = text.find(" ", pos)
+        return start, len(text) if end == -1 else end
+
+    def _on_changed(self, _entry: Any) -> None:
+        from gi.repository import GLib
+
+        self._generation += 1
+        if self._timeout_id:
+            GLib.source_remove(self._timeout_id)
+            self._timeout_id = 0
+        if self._suppress:
+            self._hide()
+            return
+        # Wait until the user stops typing before querying Danbooru.
+        self._timeout_id = GLib.timeout_add(_SUGGESTION_DELAY_MS, self._on_timeout)
+
+    def _on_timeout(self) -> bool:
+        self._timeout_id = 0
+        start, end = self._current_word()
+        word = self._entry.get_text()[start:end].lower().lstrip("-")
+        if not word or _is_forbidden_tag(word):
+            self._hide()
+            return False
+        generation = self._generation
+        threading.Thread(target=self._fetch_thread, args=(word, generation), daemon=True).start()
+        return False
+
+    def _fetch_thread(self, word: str, generation: int) -> None:
+        from gi.repository import GLib
+
+        suggestions = _fetch_tag_suggestions(word)
+        GLib.idle_add(self._show, suggestions, generation)
+
+    def _show(self, suggestions: list[tuple[str, int]], generation: int) -> bool:
+        from gi.repository import Gtk, Pango
+
+        # Drop answers for text the user has already changed.
+        if generation != self._generation:
+            return False
+        self._listbox.remove_all()
+        for name, count in suggestions:
+            box = Gtk.Box(spacing=12)
+            box.set_margin_top(6)
+            box.set_margin_bottom(6)
+            box.set_margin_start(12)
+            box.set_margin_end(12)
+            name_label = Gtk.Label(label=name, xalign=0)
+            name_label.set_hexpand(True)
+            name_label.set_ellipsize(Pango.EllipsizeMode.END)
+            box.append(name_label)
+            count_label = Gtk.Label(label=f"{count:,} images".replace(",", "\u202f"))
+            count_label.add_css_class("dim-label")
+            count_label.add_css_class("caption")
+            box.append(count_label)
+            row = Gtk.ListBoxRow()
+            row.set_child(box)
+            row.tag_name = name
+            self._listbox.append(row)
+        self._revealer.set_reveal_child(bool(suggestions))
+        return False
+
+    def _hide(self) -> None:
+        self._revealer.set_reveal_child(False)
+
+    def _on_row_activated(self, _listbox: Any, row: Any) -> None:
+        text = self._entry.get_text()
+        start, end = self._current_word()
+        prefix = "-" if text[start:end].startswith("-") else ""
+        new_text = text[:start] + prefix + row.tag_name + " " + text[end:].lstrip(" ")
+        self._suppress = True
+        self._entry.set_text(new_text)
+        self._suppress = False
+        self._entry.grab_focus()
+        self._entry.set_position(start + len(prefix) + len(row.tag_name) + 1)
+        self._hide()
+
 
 class DanbooruDownloaderAPI(BaseDownloaderAPI):
     def __init__(self, settings=None) -> None:
@@ -212,18 +343,39 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         title_label.set_halign(Gtk.Align.START)
         vbox.append(title_label)
 
-        desc_label = Gtk.Label(label="Enter tags separated by spaces (e.g., cat_ears solo)")
+        desc_label = Gtk.Label(
+            label="Separate tags with spaces and write multi-word tags with "
+                  "underscores (cat_ears, not \"cat ears\"). Put a minus "
+                  "before a tag to exclude it (-cat_ears). Without a Danbooru "
+                  f"account you can use at most {_MAX_ANONYMOUS_TAGS} tags."
+        )
         desc_label.add_css_class("caption")
         desc_label.set_halign(Gtk.Align.START)
+        desc_label.set_xalign(0)
         desc_label.set_wrap(True)
         vbox.append(desc_label)
 
         entry = Gtk.Entry()
         entry.set_text(self.tags)
-        entry.set_placeholder_text("e.g., cat_ears solo 1girl")
+        entry.set_placeholder_text("e.g., cat_ears solo")
         entry.set_hexpand(True)
         entry.connect("changed", lambda e: self._on_tags_changed(e, window))
         vbox.append(entry)
+
+        count_label = Gtk.Label()
+        count_label.add_css_class("caption")
+        count_label.set_halign(Gtk.Align.END)
+        vbox.append(count_label)
+        entry.connect("changed", lambda e: self._update_tag_count(e, count_label))
+        self._update_tag_count(entry, count_label)
+
+        suggestions = Gtk.ListBox()
+        suggestions.set_selection_mode(Gtk.SelectionMode.NONE)
+        suggestions.add_css_class("boxed-list")
+        revealer = Gtk.Revealer()
+        revealer.set_child(suggestions)
+        vbox.append(revealer)
+        window._tag_autocomplete = _TagAutocomplete(entry, suggestions, revealer)
 
         row = Adw.PreferencesRow()
         row.set_child(vbox)
@@ -243,6 +395,16 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
         self.tags = ' '.join(tagcheck)
         if self._settings:
             self._settings.set_preference("danbooru_tags", self.tags)
+
+    def _update_tag_count(self, entry: Any, label: Any) -> None:
+        count = len(entry.get_text().split())
+        label.set_label(f"{count}/{_MAX_ANONYMOUS_TAGS} tags")
+        if count > _MAX_ANONYMOUS_TAGS:
+            label.add_css_class("warning")
+            entry.add_css_class("warning")
+        else:
+            label.remove_css_class("warning")
+            entry.remove_css_class("warning")
 
     def _on_prefs_close(self, text: Any, parent: Any) -> None:
         tagcheck = text.get_text().lower().split()
