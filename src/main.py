@@ -69,10 +69,12 @@ class CatgirldownloaderApplication(Adw.Application):
     def on_art_about_action(self, widget, _):
         """Callback for the app.about action."""
         if hasattr(self.window, "info") and self.window.info:
-            item = self.window.source_selector.get_selected_item()
-            if item and hasattr(item, "api"):
-                artist = item.api.get_artist(self.window.info)
-                link = item.api.get_link(self.window.info)
+            # Credit the source of the image on screen, even if another
+            # source is selected in the dropdown now.
+            api = self.window.get_loaded_api()
+            if api is not None:
+                artist = api.get_artist(self.window.info)
+                link = api.get_link(self.window.info)
 
                 artists = [artist] if artist else []
                 website = link if link else ""

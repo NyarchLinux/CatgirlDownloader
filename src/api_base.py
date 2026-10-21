@@ -7,6 +7,9 @@ class BaseDownloaderAPI(ABC):
     def __init__(self) -> None:
         self.endpoint: str = ""
         self.info: Optional[dict[str, Any]] = None
+        # Human-readable reason for the last failed get_image_url() call,
+        # shown to the user instead of failing silently.
+        self.last_error: Optional[str] = None
 
     @abstractmethod
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:
@@ -46,16 +49,10 @@ class BaseDownloaderAPI(ABC):
         Opens a settings window for this downloader source.
         Override this method if the source has configurable settings.
         """
-        # Default implementation opens the main application preferences
-        # Avoid circular import by importing inside the method
+        # Default implementation opens the main application preferences.
+        # 'parent' is usually the gear button inside the source dropdown, which
+        # has no get_application(), so ask the running application directly.
         from gi.repository import Gio
-        action = Gio.SimpleAction.new("preferences", None)
-        action.activate(None)
-        # Alternatively, since we can't easily trigger the app action from here without the app instance context cleanly,
-        # we can check if parent has the action or trigger it via the application.
-        
-        # A safer way if 'parent' is the window is to use the action group:
-        if hasattr(parent, "get_application"):
-            app = parent.get_application()
-            if app:
-                app.activate_action("preferences", None)
+        app = Gio.Application.get_default()
+        if app is not None:
+            app.activate_action("preferences", None)

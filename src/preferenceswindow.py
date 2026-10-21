@@ -19,11 +19,12 @@ class PreferencesWindow(Adw.PreferencesWindow):
         model = Gtk.StringList.new(self._nsfw_options)
         self.nsfw_dropdown.set_model(model)
 
-        current = self.settings.get_preference("nsfw_mode") or NSFWOption.BLOCK_NSFW
+        current = self.settings.get_preference("nsfw_mode") or NSFWOption.BLOCK_NSFW.value
         try:
             index = self._nsfw_options.index(current)
         except ValueError:
-            index = 0
+            # Index 0 is "Show everything": fall back to the safe default instead.
+            index = self._nsfw_options.index(NSFWOption.BLOCK_NSFW.value)
         self.nsfw_dropdown.set_selected(index)
 
         self.nsfw_dropdown.connect("notify::selected", self.on_nsfw_change)

@@ -13,6 +13,21 @@ _FORBIDDEN_TAG_2 = base64.b64decode('bG9saQ=='.encode('utf-8')).decode('utf-8')
 _REQUEST_HEADERS = {
     "User-Agent": "CatgirlDownloader/1.0 (+https://github.com/NyarchLinux/CatgirlDownloader)"
 }
+_BATCH_SIZE = 20
+_FALLBACK_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
+
+
+def _displayable_extensions() -> set[str]:
+    """File extensions the installed GdkPixbuf loaders can decode
+    (webp/avif only when the matching loader package is installed)."""
+    try:
+        from gi.repository import GdkPixbuf
+        exts = {ext.lower()
+                for fmt in GdkPixbuf.Pixbuf.get_formats()
+                for ext in fmt.get_extensions()}
+        return exts or set(_FALLBACK_EXTENSIONS)
+    except Exception:
+        return set(_FALLBACK_EXTENSIONS)
 
 class DanbooruDownloaderAPI(BaseDownloaderAPI):
     def __init__(self, settings=None) -> None:
@@ -53,42 +68,72 @@ class DanbooruDownloaderAPI(BaseDownloaderAPI):
             return rating_tag
         return tags
 
-    def get_random_post(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW, max_retries: int = 5) -> Optional[dict]:
+    @staticmethod
+    def _error_from_response(r: requests.Response) -> str:
+        # Danbooru explains refused searches in JSON, e.g. the 2-tag limit
+        # for anonymous users ("You cannot search for more than 2 tags...").
+        try:
+            message = r.json().get("message")
+            if message:
+                return f"Danbooru: {message}"
+        except Exception:
+            pass
+        return f"Danbooru answered with HTTP {r.status_code}"
+
+    def get_random_post(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW, max_retries: int = 3) -> Optional[dict]:
+        self.last_error = None
+        tags = self._build_tags_query(nsfw_mode)
+        # Ask for a batch of random posts and keep the first usable one:
+        # many posts are videos/ugoira (not loadable by GdkPixbuf) or have
+        # no file_url for anonymous users, and a single random post would
+        # then leave the window unchanged.
+        params = {
+            "limit": _BATCH_SIZE,
+            "random": "true"
+        }
+        if tags:
+            params["tags"] = tags
+        displayable = _displayable_extensions()
+
         for attempt in range(max_retries):
             try:
-                tags = self._build_tags_query(nsfw_mode)
-                params = {
-                    "limit": 1,
-                    "random": "true"
-                }
-                if tags:
-                    params["tags"] = tags
                 r = requests.get(
                     f"{self.endpoint}/posts.json",
                     params=params,
                     headers=_REQUEST_HEADERS,
                     timeout=10,
                 )
-                if r.status_code != 200:
-                    return None
             except Exception as e:
                 print(e)
+                self.last_error = "Could not reach Danbooru"
+                return None
+            if r.status_code != 200:
+                self.last_error = self._error_from_response(r)
+                print(self.last_error)
                 return None
             try:
-                data = json.loads(r.text)
-                if isinstance(data, list) and len(data) > 0:
-                    post = data[0]
-                    post_tags = post.get('tag_string', '').split()
-                    if _FORBIDDEN_TAG_1 in post_tags or _FORBIDDEN_TAG_2 in post_tags:
-                        print(f'Attempt {attempt + 1}: Forbidden tags in post, retrying...')
-                        continue
+                data = r.json()
+            except ValueError:
+                self.last_error = "Danbooru sent an invalid response"
+                return None
+            if not isinstance(data, list) or not data:
+                self.last_error = "No Danbooru posts match these tags"
+                return None
 
-                    self.info = post
-                    return post
-                return None
-            except Exception:
-                return None
+            for post in data:
+                post_tags = post.get('tag_string', '').split()
+                if _FORBIDDEN_TAG_1 in post_tags or _FORBIDDEN_TAG_2 in post_tags:
+                    continue
+                if not post.get("file_url"):
+                    continue
+                if (post.get("file_ext") or "").lower() not in displayable:
+                    continue
+                self.info = post
+                return post
+            print(f'Attempt {attempt + 1}: no displayable post in batch, retrying...')
+
         print(f'Could not find suitable post after {max_retries} attempts')
+        self.last_error = "No displayable Danbooru image found for these tags"
         return None
 
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:

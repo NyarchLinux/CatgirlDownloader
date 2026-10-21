@@ -19,18 +19,22 @@ class CatgirlDownloaderAPI(BaseDownloaderAPI):
             elif nsfw_mode == NSFWOption.BLOCK_NSFW or nsfw_mode == NSFWOption.BLOCK_NSFW.value:
                 url += "?nsfw=false"
 
+            self.last_error = None
             r = requests.get(url, timeout=10)
             if r.status_code != 200:
+                self.last_error = f"nekos.moe answered with HTTP {r.status_code}"
                 return None
         except Exception as e:
             print(e)
+            self.last_error = "Could not reach nekos.moe"
             return None
-        
+
         try:
             data = json.loads(r.text)
             self.info = data
             return data['images'][0]['id']
         except Exception:
+            self.last_error = "nekos.moe sent an unexpected response"
             return None
 
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:

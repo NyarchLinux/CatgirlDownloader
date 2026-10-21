@@ -18,13 +18,16 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
                 params = {"IsNsfw": "True"}
             else:
                 params = {"IsNsfw": "False"}
+            self.last_error = None
             r = requests.get(self.endpoint, params=params, timeout=10)
             if r.status_code == 200:
                 return r.text
             else:
+                self.last_error = f"waifu.im answered with HTTP {r.status_code}"
                 return None
         except Exception as e:
             print(e)
+            self.last_error = "Could not reach waifu.im"
             return None
 
     def get_page_url(self, response: Optional[str]) -> Optional[str]:
@@ -36,6 +39,7 @@ class WaifuDownloaderAPI(BaseDownloaderAPI):
             return data["items"][0]['url']
         except Exception as e:
             print(e)
+            self.last_error = "waifu.im sent an unexpected response"
             return None
 
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:

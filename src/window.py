@@ -25,6 +25,7 @@ from .catgirl import CatgirlDownloaderAPI
 from .waifu import WaifuDownloaderAPI
 from .danbooru import DanbooruDownloaderAPI
 from .preferences import UserPreferences
+from .types import NSFWOption
 
 
 def load_image_with_callback(url, callback, error_callback=None, headers=None):
@@ -85,6 +86,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
     save_button = Gtk.Template.Child("savebutton")
     auto_reload_switch = Gtk.Template.Child("auto_reload_switch")
     source_selector = Gtk.Template.Child("source_selector")
+    toast_overlay = Gtk.Template.Child("toast_overlay")
 
     AVAILABLE_SOURCES = {
         "catgirl": {
@@ -130,31 +132,36 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         if not found_source and self.source_store.get_n_items() > 0:
             default_index = 0
 
-        self.source_selector.set_model(self.source_store)
-        
+        # Factories must be set before the model, otherwise GTK complains
+        # "Either GtkDropDown:factory or GtkDropDown:expression must be set".
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.setup_source_item)
         factory.connect("bind", self.bind_source_item)
-        self.source_selector.set_factory(factory)
-        
+
         # Configure list factory for the dropdown list to use the complex layout
         self.source_selector.set_list_factory(factory)
-        
+
         # Configure a simple factory for the selected item display (button content)
         # We just want the name of the source here
         button_factory = Gtk.SignalListItemFactory()
         button_factory.connect("setup", self.setup_source_button_item)
         button_factory.connect("bind", self.bind_source_button_item)
         self.source_selector.set_factory(button_factory)
-        
+
+        self.source_selector.set_model(self.source_store)
+
         self.source_selector.set_selected(default_index)
         self.source_selector.connect("notify::selected-item", self.on_source_changed)
 
         self.info = None
         self.imagecontent = None
         self.image_extension = None
+        # Source of the image currently displayed (can differ from the
+        # dropdown selection while a new source is loading).
+        self.loaded_source_id = None
 
         self._is_loading = False
+        self._reload_pending = False
         self._auto_reload_timeout_id = None
         self._auto_reload_interval = self._get_auto_reload_interval()
 
@@ -254,7 +261,24 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         item = dropdown.get_selected_item()
         if item:
             self.settings.set_preference("source", item.id)
-            self.async_reloadimage()
+            if self._is_loading:
+                # A download from the previous source is still running:
+                # drop its result and load the new source right after.
+                self._reload_pending = True
+            else:
+                self.async_reloadimage()
+
+    def _get_nsfw_mode(self) -> NSFWOption:
+        # Unknown or corrupted values fall back to the safe default
+        # instead of disabling the filter.
+        try:
+            return NSFWOption(self.settings.get_preference("nsfw_mode"))
+        except ValueError:
+            return NSFWOption.BLOCK_NSFW
+
+    def get_loaded_api(self):
+        """API object of the source the displayed image came from."""
+        return self.downloaders.get(self.loaded_source_id)
 
     def _get_auto_reload_enabled(self) -> bool:
         enabled = self.settings.get_preference("auto_reload_enabled")
@@ -350,56 +374,87 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
 
     def _fetch_url_thread(self, source_id=None):
         try:
-            if not source_id:
+            if source_id not in self.downloaders:
                 source_id = next(iter(self.downloaders))
+            ct = self.downloaders[source_id]
 
-            ct = self.downloaders.get(source_id)
-            if not ct:
-                ct = self.downloaders[next(iter(self.downloaders))]
-                
-            nsfw_mode_setting = self.settings.get_preference("nsfw_mode")
-            url = ct.get_image_url(nsfw_mode_setting) if nsfw_mode_setting is not None else ct.get_image_url()
+            url = ct.get_image_url(self._get_nsfw_mode())
             info = getattr(ct, "info", None)
-            
+
             if url:
                 load_image_with_callback(
-                    url, 
-                    lambda loader, data: self._on_image_loaded(loader, data, info), 
-                    self._on_image_error,
+                    url,
+                    lambda loader, data: self._on_image_loaded(loader, data, info, source_id),
+                    lambda error: self._on_image_error(error, source_id),
                     ct.get_request_headers(),
                 )
             else:
-                 GLib.idle_add(self._on_image_error, Exception("Could not retrieve image URL"))
+                reason = getattr(ct, "last_error", None) or "Could not retrieve image URL"
+                GLib.idle_add(self._on_image_error, Exception(reason), source_id)
         except Exception as e:
             print(f"Error fetching URL: {e}")
-            GLib.idle_add(self._on_image_error, e)
+            GLib.idle_add(self._on_image_error, e, source_id)
 
-    def _on_image_loaded(self, loader, content, info):
+    def _on_image_loaded(self, loader, content, info, source_id=None):
         try:
+            if self._reload_pending:
+                # The user switched source meanwhile: don't show a stale image.
+                return
+            pixbuf = loader.get_pixbuf()
+            if pixbuf is None:
+                raise ValueError("unsupported image format")
+            self.image.set_pixbuf(pixbuf)
+
+            # Only remember the image once it is actually displayed, so
+            # Save and About Art always match what is on screen.
             self.info = info
             self.imagecontent = content
-            
-            # Loader is already closed and should have pixbuf
-            self.image.set_pixbuf(loader.get_pixbuf())
-            
+            self.loaded_source_id = source_id
+            self.image_extension = None
             image_format = loader.get_format()
-            if image_format and image_format.extensions:
-                self.image_extension = image_format.extensions[0]
-                
+            if image_format:
+                extensions = image_format.get_extensions()
+                if extensions:
+                    self.image_extension = extensions[0]
+
             self.image.set_visible(True)
         except Exception as e:
             print(f"Error displaying image: {e}")
+            self._show_error(f"Couldn't display this image ({e})")
         finally:
             self._finish_loading()
-            
-    def _on_image_error(self, error):
+
+    def _on_image_error(self, error, source_id=None):
         print(f"Image loading error: {error}")
+        if not self._reload_pending:
+            if isinstance(error, requests.RequestException):
+                message = "Couldn't download the image"
+            elif isinstance(error, GLib.Error):
+                message = "Couldn't display this image (unsupported format?)"
+            else:
+                message = str(error)
+            self._show_error(message)
         self._finish_loading()
+
+    def _show_error(self, message):
+        """Tell the user why no new image appeared, instead of failing silently."""
+        if len(message) > 140:
+            message = message[:137] + "..."
+        if getattr(self, "_error_toast", None) is not None:
+            self._error_toast.dismiss()
+        toast = Adw.Toast.new(GLib.markup_escape_text(message))
+        toast.set_timeout(4)
+        self._error_toast = toast
+        self.toast_overlay.add_toast(toast)
 
     def _finish_loading(self):
         self.spinner.stop()
         self.spinner.set_visible(False)
         self._is_loading = False
+        if self._reload_pending:
+            self._reload_pending = False
+            self.async_reloadimage()
+            return
         if self.auto_reload_switch.get_active():
             self._schedule_next_auto_reload()
 
@@ -411,19 +466,10 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.dialog = Gtk.FileChooserDialog(title="Save file", parent=self,
                                             action=Gtk.FileChooserAction.SAVE)
 
-        source_id = None
-        item = self.source_selector.get_selected_item()
-        if item:
-            source_id = item.id
-        
-        if not source_id:
-             if self.source_store.get_n_items() > 0:
-                 source_id = self.source_store.get_item(0).id
-             elif self.downloaders:
-                 source_id = next(iter(self.downloaders))
+        # Name the file after the source the displayed image came from,
+        # not the one currently selected in the dropdown.
+        downloader = self.get_loaded_api()
 
-        downloader = self.downloaders.get(source_id)
-        
         current_name = "image"
         if downloader:
              current_name = downloader.get_filename_suggestion(self.image_extension, self.info)
@@ -448,9 +494,12 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         """Save image and destroy file chooser"""
         if response_id == Gtk.ResponseType.OK:
             file = dialog.get_file()
-            filename = file.get_path()
-            if self.imagecontent:
-                f = open(filename, "wb+")
-                f.write(self.imagecontent)
-                f.close()
+            filename = file.get_path() if file is not None else None
+            if filename and self.imagecontent:
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(self.imagecontent)
+                except OSError as e:
+                    print(f"Error saving image: {e}")
+                    self._show_error(f"Couldn't save the image: {e.strerror}")
         dialog.destroy()
