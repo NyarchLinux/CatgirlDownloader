@@ -6,23 +6,19 @@ from typing import Optional
 from .types import NSFWOption
 from .api_base import BaseDownloaderAPI
 
-_REQUEST_HEADERS = {
-    "User-Agent": "CatgirlDownloader/1.0 (+https://github.com/NyarchLinux/CatgirlDownloader)"
-}
-
 
 class KitsuneDownloaderAPI(BaseDownloaderAPI):
     def __init__(self, settings=None) -> None:
         super().__init__()
         self.endpoint = "https://nekos.best/api/v2/kitsune"
 
-    def get_request_headers(self) -> dict[str, str]:
-        return dict(_REQUEST_HEADERS)
-
     def get_image_url(self, nsfw_mode: NSFWOption = NSFWOption.BLOCK_NSFW) -> Optional[str]:
         # nekos.best only serves SFW content, so nsfw_mode is intentionally ignored.
+        # NOTE: nekos.best's Cloudflare blocks requests that advertise a custom or
+        # browser User-Agent (403), but allows the default python-requests UA (200).
+        # So we deliberately send no custom headers here.
         try:
-            r = requests.get(self.endpoint, headers=_REQUEST_HEADERS, timeout=10)
+            r = requests.get(self.endpoint, timeout=10)
             if r.status_code != 200:
                 return None
         except Exception as e:
