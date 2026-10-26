@@ -9,6 +9,8 @@ class UserPreferences:
             "auto_reload_enabled": False,
             "auto_reload_interval": 5,
             "danbooru_tags": "",
+            "download_path": "",
+            "auto_save_enabled": False,
         }
         self.preferences = dict(self._defaults)
         self.directory = os.path.join(GLib.get_user_config_dir(), "catgirldownloader")
@@ -49,6 +51,24 @@ class UserPreferences:
             return self.preferences[key]
         else:
             return None
+    def get_download_path(self):
+        """Return the folder images are saved to, falling back to the user's Downloads folder."""
+        path = self.get_preference("download_path")
+        if isinstance(path, str) and path and os.path.isdir(path):
+            return path
+        download_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
+        if download_dir:
+            return download_dir
+        return os.path.expanduser("~")
+
+    def get_auto_save_enabled(self) -> bool:
+        enabled = self.get_preference("auto_save_enabled")
+        if isinstance(enabled, bool):
+            return enabled
+        if isinstance(enabled, str):
+            return enabled.lower() in ("1", "true", "yes", "on")
+        return False
+
     def set_preference(self, key, value):
         self.preferences[key] = value
         try:

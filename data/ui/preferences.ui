@@ -47,6 +47,36 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title" translatable="yes">Downloads</property>
+            <child>
+              <object class="AdwActionRow" id="download_path_row">
+                <property name="title" translatable="yes">Default download folder</property>
+                <property name="subtitle" translatable="yes">Folder used when saving images</property>
+                <property name="activatable_widget">download_path_button</property>
+                <child>
+                  <object class="GtkButton" id="download_path_button">
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">Choose…</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title" translatable="yes">Auto-save</property>
+                <property name="subtitle" translatable="yes">Save images to the default folder without asking</property>
+                <property name="activatable_widget">auto_save_switch</property>
+                <child>
+                  <object class="GtkSwitch" id="auto_save_switch">
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
   </template>

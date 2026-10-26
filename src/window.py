@@ -17,6 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 import threading
 import requests
 from gi.repository import Gtk, Adw, GdkPixbuf, GLib, Gio, GObject
@@ -86,6 +87,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
     save_button = Gtk.Template.Child("savebutton")
     auto_reload_switch = Gtk.Template.Child("auto_reload_switch")
     source_selector = Gtk.Template.Child("source_selector")
+    toast_overlay = Gtk.Template.Child("toast_overlay")
 
     AVAILABLE_SOURCES = {
         "catgirl": {
@@ -170,7 +172,7 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.auto_reload_switch.connect("notify::active", self.on_auto_reload_toggle)
 
         self.refresh_button.connect("clicked", self.async_reloadimage)
-        self.save_button.connect("clicked", self.file_chooser_dialog)
+        self.save_button.connect("clicked", self.on_save_clicked)
         self.async_reloadimage()
 
     def setup_source_button_item(self, factory, list_item):
@@ -410,6 +412,52 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         if self.auto_reload_switch.get_active():
             self._schedule_next_auto_reload()
 
+    def on_save_clicked(self, button):
+        """Save directly to the default folder when auto-save is on, ask otherwise."""
+        if not self.info or not self.imagecontent:
+            return
+        if self.settings.get_auto_save_enabled():
+            self.save_to_download_path()
+        else:
+            self.file_chooser_dialog()
+
+    def get_selected_downloader(self):
+        item = self.source_selector.get_selected_item()
+        if item:
+            return self.downloaders.get(item.id)
+        if self.downloaders:
+            return self.downloaders[next(iter(self.downloaders))]
+        return None
+
+    @staticmethod
+    def unique_path(path):
+        """Return a path that does not overwrite an existing file."""
+        if not os.path.exists(path):
+            return path
+        folder, name = os.path.split(path)
+        stem, ext = os.path.splitext(name)
+        counter = 1
+        while True:
+            candidate = os.path.join(folder, f"{stem}-{counter}{ext}")
+            if not os.path.exists(candidate):
+                return candidate
+            counter += 1
+
+    def save_to_download_path(self):
+        folder = self.settings.get_download_path()
+        downloader = self.get_selected_downloader()
+        filename = downloader.get_filename_suggestion(self.image_extension, self.info) \
+            if downloader else "image"
+        try:
+            os.makedirs(folder, exist_ok=True)
+            path = self.unique_path(os.path.join(folder, filename))
+            with open(path, "wb") as f:
+                f.write(self.imagecontent)
+            self.toast_overlay.add_toast(Adw.Toast.new(f"Saved to {os.path.basename(path)}"))
+        except Exception as e:
+            print(f"Error saving image: {e}")
+            self.toast_overlay.add_toast(Adw.Toast.new("Could not save image"))
+
     def file_chooser_dialog(self, ae=None):
         """Displays the dialog to save the image
         """
@@ -418,19 +466,8 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         self.dialog = Gtk.FileChooserDialog(title="Save file", parent=self,
                                             action=Gtk.FileChooserAction.SAVE)
 
-        source_id = None
-        item = self.source_selector.get_selected_item()
-        if item:
-            source_id = item.id
-        
-        if not source_id:
-             if self.source_store.get_n_items() > 0:
-                 source_id = self.source_store.get_item(0).id
-             elif self.downloaders:
-                 source_id = next(iter(self.downloaders))
+        downloader = self.get_selected_downloader()
 
-        downloader = self.downloaders.get(source_id)
-        
         current_name = "image"
         if downloader:
              current_name = downloader.get_filename_suggestion(self.image_extension, self.info)
@@ -445,6 +482,10 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
         
         self.dialog.set_current_name(current_name)
 
+        download_folder = self.settings.get_download_path()
+        if os.path.isdir(download_folder):
+            self.dialog.set_current_folder(Gio.File.new_for_path(download_folder))
+
         # Buttons
         self.dialog.add_button('Cancel', Gtk.ResponseType.CANCEL)
         self.dialog.add_button('Save', Gtk.ResponseType.OK)
@@ -457,7 +498,6 @@ class CatgirldownloaderWindow(Adw.ApplicationWindow):
             file = dialog.get_file()
             filename = file.get_path()
             if self.imagecontent:
-                f = open(filename, "wb+")
-                f.write(self.imagecontent)
-                f.close()
+                with open(filename, "wb") as f:
+                    f.write(self.imagecontent)
         dialog.destroy()
