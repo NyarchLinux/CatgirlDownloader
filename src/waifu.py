@@ -8,7 +8,7 @@ from .api_base import BaseDownloaderAPI
 class WaifuDownloaderAPI(BaseDownloaderAPI):
     def __init__(self, settings=None) -> None:
         super().__init__()
-        self.endpoint = "https://api.waifu.im/images"
+        self.endpoint = "https://waifu-api-031n.onrender.com/images"
 
     def get_page(self, nsfw: Optional[bool] = None) -> Optional[str]:
         try:
